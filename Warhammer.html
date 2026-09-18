@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>战锤40K：巢都命运 V3.1</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; padding: 16px;
+    background: radial-gradient(circle at top, #1a1410, #050505 70%);
+    color: #d8d0c0; font-family: "Georgia", "Microsoft YaHei", serif;
+    display: flex; justify-content: center;
+  }
+  .game {
+    width: 100%; max-width: 820px;
+    background: linear-gradient(180deg, #14100c, #0a0806);
+    border: 1px solid #4a3a1a; border-radius: 12px; padding: 20px;
+    box-shadow: 0 0 40px rgba(180,120,20,.15), inset 0 0 60px rgba(0,0,0,.8);
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  h1 {
+    margin: 0 0 12px; font-size: 22px; letter-spacing: 2px;
+    color: #c9a227; text-align: center;
+    text-shadow: 0 0 12px rgba(201,162,39,.5);
+  }
+  .screen { display: flex; flex-direction: column; gap: 12px; }
+  .status { display: flex; flex-wrap: wrap; gap: 6px; font-size: 13px; min-height: 26px; }
+  .status span {
+    background: #1e1810; border: 1px solid #3a2e18;
+    padding: 4px 9px; border-radius: 4px; color: #b8a880;
+  }
+  .status .path { background: #2a1a10; border-color: #7a4a1a; color: #e0a040; font-weight: bold; }
+  .status .corrupt { color: #c06060; }
+  .status .cheat { color: #50c0ff; }
+  .progress-wrap { display: none; }
+  .progress-wrap.on { display: block; }
+  .progress-label { font-size: 12px; color: #8a7a5a; margin-bottom: 4px; }
+  .progress-bar { height: 8px; background: #1a1410; border: 1px solid #3a2e18; border-radius: 4px; overflow: hidden; }
+  .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #6a4a10, #c9a227); transition: width .3s; }
+  .log {
+    height: 380px; overflow-y: auto; background: #060504; border: 1px solid #2a2018;
+    border-radius: 6px; padding: 14px; line-height: 1.7; font-size: 14.5px;
+  }
+  .log p { margin: 0 0 8px; }
+  .log .sys { color: #8a7a5a; font-size: 13px; }
+  .log .event { color: #c9a227; }
+  .log .promo { color: #e0c060; font-weight: bold; text-shadow: 0 0 8px rgba(224,192,96,.5); }
+  .log .dark { color: #a05050; }
+  .log .good { color: #7ab87a; }
+  .log .battle { color: #d06030; }
+  .log .death { color: #ff3030; font-weight: bold; text-shadow: 0 0 10px rgba(255,48,48,.6); }
+  .log .age { color: #c09060; font-style: italic; }
+  .choices { display: flex; flex-direction: column; gap: 8px; }
+  button {
+    background: #1a1410; color: #d8d0c0; border: 1px solid #4a3a1a; border-radius: 6px;
+    padding: 12px 14px; font-size: 14.5px; cursor: pointer; text-align: left;
+    font-family: inherit; transition: all .2s;
+  }
+  button:hover { background: #2a2018; border-color: #c9a227; color: #f0e8d0; }
+  button:active { transform: scale(.995); }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+  button .hint { color: #7090c0; font-size: 12px; margin-left: 6px; }
+  button .risk { color: #c05050; font-size: 12px; margin-left: 6px; }
+  .menu-buttons { display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }
+  .menu-buttons button {
+    text-align: center; padding: 16px; font-size: 16px;
+    letter-spacing: 4px; font-weight: bold;
+    background: #1a1410; border-color: #4a3a1a; color: #c9a227;
+  }
+  .menu-buttons button:hover { background: #2a1f10; border-color: #c9a227; color: #f0d060; }
+  .menu-buttons button.primary { background: #2a1a10; border-color: #7a4a1a; color: #e0a040; }
+  .menu-buttons button.primary:hover { background: #3a2414; border-color: #c9a227; }
+  .menu-buttons button.danger { color: #a05050; }
+  .menu-buttons button.danger:hover { color: #d06060; border-color: #7a2020; }
+  .menu-note {
+    text-align: center; font-size: 12px; color: #6a5a4a;
+    min-height: 20px; margin-top: 4px;
+  }
+  .menu-note.ok { color: #7ab87a; }
+  .menu-note.warn { color: #c09060; }
+  .intro-text {
+    text-align: center; color: #8a7a5a; font-size: 13px;
+    line-height: 1.7; padding: 8px 0;
+  }
+  .intro-text p { margin: 4px 0; }
+  input {
+    background: #060504; border: 1px solid #4a3a1a;
+    color: #e0c060; padding: 14px; font-size: 16px;
+    border-radius: 6px; font-family: inherit;
+    text-align: center; letter-spacing: 2px; width: 100%;
+  }
+  input:focus { outline: none; border-color: #c9a227; box-shadow: 0 0 12px rgba(201,162,39,.3); }
+  .back-link {
+    text-align: center; font-size: 12px; color: #5a4a3a;
+    background: transparent; border: none; padding: 6px;
+    cursor: pointer; text-decoration: underline;
+  }
+  .back-link:hover { color: #8a7a5a; background: transparent; }
+  .quit-text {
+    text-align: center; padding: 20px 0; color: #8a7a5a; line-height: 2;
+  }
+  .quit-text strong { color: #c9a227; display: block; margin-bottom: 12px; font-size: 18px; }
+</style>
+</head>
+<body>
+<div class="game">
+  <!-- ========== 主菜单 ========== -->
+  <div id="menuScreen" class="screen">
+    <h1>☠ 战锤40K · 巢都命运 ☠</h1>
+    <div class="intro-text">
+      <p>你出生在下巢。雾气、机油、尸臭和祷文，是你对世界最初的记忆。</p>
+      <p>在这里，命运只属于敢于抓住它的人。</p>
+    </div>
+    <div class="menu-buttons">
+      <button class="primary" id="menuStart">开 始</button>
+      <button id="menuSave">保 存</button>
+      <button id="menuLoad">读 取</button>
+      <button class="danger" id="menuQuit">退 出</button>
+    </div>
+    <div class="menu-note" id="menuNote"></div>
+  </div>
+
+  <!-- ========== 命名界面 ========== -->
+  <div id="nameScreen" class="screen" style="display:none;">
+    <h1>报 上 你 的 名 字</h1>
+    <div class="intro-text">
+      <p>名字将被记录在案。你可以是任何人，但你只有一次机会。</p>
+    </div>
+    <input id="nameField" maxlength="12" placeholder="输入名字（最多12字）" autocomplete="off">
+    <div class="menu-buttons">
+      <button class="primary" id="nameConfirm">开 始 命 运</button>
+      <button class="back-link" id="nameBack">返 回</button>
+    </div>
+  </div>
+
+  <!-- ========== 游戏界面 ========== -->
+  <div id="gameScreen" class="screen" style="display:none;">
+    <div class="status" id="status"></div>
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-label" id="progressLabel"></div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+    <div class="log" id="log"></div>
+    <div class="choices" id="choices"></div>
+    <button class="back-link" id="backToMenu">返回主菜单</button>
+  </div>
+
+  <!-- ========== 退出界面 ========== -->
+  <div id="quitScreen" class="screen" style="display:none;">
+    <h1>☠</h1>
+    <div class="quit-text">
+      <strong>愿帝皇保佑你</strong>
+      <p>在黑暗的第四十个千年，<br>唯有战争永不停息。</p>
+      <p style="font-size:12px; margin-top:24px;">你可以直接关闭此页面，<br>或返回主菜单重新开始。</p>
+    </div>
+    <div class="menu-buttons">
+      <button class="back-link" id="quitBack">返 回 主 菜 单</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================
+   常量
+============================ */
+const CHAOS_PATHS    = ['khorne','nurgle','slaanesh','tzeentch','chaos'];
+const IMPERIAL_PATHS = ['sm','ig','tech'];
+
+const PATHS = {
+  sm:      { name:'星际战士',  ranks:['新兵','侦察兵','战术战士','士官','连长'],           god:'帝皇' },
+  khorne:  { name:'恐虐信徒',  ranks:['血祭者','屠夫','血神战士','恐虐勇士','血碾大魔'],    god:'恐虐' },
+  nurgle:  { name:'纳垢信徒',  ranks:['疫病携带者','瘟疫僧','疫病领主','纳垢勇士','大不净者'], god:'纳垢' },
+  slaanesh:{ name:'色孽信徒',  ranks:['欢愉追寻者','纵欲者','色孽战士','色孽勇士','守秘者'], god:'色孽' },
+  tzeentch:{ name:'奸奇信徒',  ranks:['低语者','阴谋学徒','咒术师','奸奇勇士','万变魔君'],  god:'奸奇' },
+  chaos:   { name:'混沌信徒',  ranks:['混沌信徒','混沌战士','混沌勇士','混沌领主','混沌战帅'], god:'无分混沌' },
+  rebel:   { name:'叛军',      ranks:['暴民','民兵头目','叛军军官','叛军指挥官','叛军首领'], god:null },
+  ig:      { name:'星界军',    ranks:['新兵','卫兵','老兵','将军','总督'],                god:'帝皇' },
+  tech:    { name:'技术神甫',  ranks:['学徒','技术神甫','机神学家','铸造统领','技术军长'],  god:'万机神' }
+};
+
+/* ============================
+   状态
+============================ */
+const DEFAULT_STATE = () => ({
+  name:'', cheatMode:false,
+  age:14, eventCount:0,
+  body:25, will:25, mind:25,
+  renown:5, corruption:0, loyalty:30,
+  phase:'hive', path:null, rank:0, progress:0,
+  stcFound:false,
+  rejected:[], log:[],
+  currentEvent:null, ended:false, started:false
+});
+
+let S = DEFAULT_STATE();
+
+const EVENTS_PER_YEAR = 4;
+const RECENT_SIZE = 6;
+let recentEvents = [];
+
+const clamp = (v, a=0, b=100) => Math.max(a, Math.min(b, v));
+const rand  = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
+const pick  = arr => arr[rand(0, arr.length - 1)];
+
+function pickFreshEvent(pool) {
+  const fresh = pool.filter(e => !recentEvents.includes(e.id));
+  const candidates = fresh.length > 0 ? fresh : pool;
+  const chosen = pick(candidates);
+  recentEvents.push(chosen.id);
+  if (recentEvents.length > RECENT_SIZE) recentEvents.shift();
+  return chosen;
+}
+
+/* ============================
+   存档
+============================ */
+const SAVE_KEY = 'hiveFate_v3_save';
+function saveGame() {
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify({ ...S, currentEvent:null })); } catch(e) {}
+}
+function loadGame() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return null;
+    return { ...DEFAULT_STATE(), ...JSON.parse(raw) };
+  } catch(e) { return null; }
+}
+function clearSave() {
+  try { localStorage.removeItem(SAVE_KEY); } catch(e) {}
+}
+
+/* ============================
+   工具
+============================ */
+function addLog(text, cls='') {
+  S.log.push({ text, cls });
+  if (S.log.length > 80) S.log.shift();
+}
+function applyEffect(e={}) {
+  ['body','will','mind','renown','corruption','loyalty'].forEach(k => {
+    if (e[k]) S[k] = clamp(S[k] + e[k]);
+  });
+  if (e.progress && S.phase === 'path') {
+    S.progress += e.progress;
+    checkPromotion();
+  }
+  saveGame();
+}
+const EFFECT_LABELS = { body:'肉体', will:'意志', mind:'智慧', renown:'声望', corruption:'腐化', loyalty:'忠诚', progress:'进度' };
+function formatEffect(e) {
+  if (!e) return '';
+  return Object.entries(e).filter(([k,v]) => v && EFFECT_LABELS[k])
+    .map(([k,v]) => `${EFFECT_LABELS[k]}${v>0?'+':''}${v}`).join(' ');
+}
+
+/* ============================
+   战斗
+============================ */
+function battlePower() {
+  return Math.floor(S.body * 1.0 + S.will * 0.5 + S.mind * 0.3 + S.renown * 0.2);
+}
+function resolveBattle(enemy) {
+  const pRoll = battlePower() + rand(1, 30);
+  const eRoll = enemy.power + rand(1, 30);
+  const win = pRoll >= eRoll;
+  return { win, text: win
+    ? `你战胜了【${enemy.name}】（你 ${pRoll} vs 敌 ${eRoll}）`
+    : `你被【${enemy.name}】击败（你 ${pRoll} vs 敌 ${eRoll}）` };
+}
+
+/* ============================
+   巢都事件池（20 个）
+============================ */
+const HIVE_EVENTS = [
+  { id:'h01', title:'帮派斗殴', text:'下巢走廊里两个帮派正在火并，你被卷了进去。',
+    choices:[
+      { text:'抄起铁管冲上去', result:'你打倒了两个人，身上多了几道伤。', effect:{ body:4, renown:2, will:1 } },
+      { text:'躲进通风管道', result:'你屏住呼吸，听着外面的惨叫。', effect:{ will:3, body:1 } },
+      { text:'趁乱摸走尸体上的东西', result:'你摸到一把还热的枪和一个徽章。', effect:{ mind:2, renown:1, corruption:3 } }
+    ]},
+  { id:'h02', title:'工厂劳作', text:'你在铸造厂流水线上工作了十二个小时。',
+    choices:[
+      { text:'拼命干活，多挣几个信用点', result:'你的手掌磨出了血泡，但换来了口粮。', effect:{ body:3, loyalty:1 } },
+      { text:'偷懒摸鱼，观察工头', result:'你学会了在压迫下生存的技巧。', effect:{ mind:2, will:2 } },
+      { text:'偷零件去黑市卖', result:'你赚了一笔，也沾上了混沌的污点。', effect:{ mind:2, renown:2, corruption:3 } }
+    ]},
+  { id:'h03', title:'国教布道', text:'国教牧师在广场上高喊：帝皇保护虔诚者！',
+    choices:[
+      { text:'虔诚聆听，跪下祈祷', result:'你感到一股温暖的力量注入体内。', effect:{ loyalty:6, will:2 } },
+      { text:'质疑牧师的言辞', result:'你开始思考：帝皇真的还活着吗？', effect:{ mind:3, corruption:3 } },
+      { text:'混在人群中偷东西', result:'你顺手牵羊，心中毫无波澜。', effect:{ renown:1, corruption:4 } }
+    ]},
+  { id:'h04', title:'亚空间低语', text:'深夜，你听见墙里传来不属于这个世界的声音。',
+    choices:[
+      { text:'倾听低语', result:'低语告诉你一些秘密，你的头脑发胀。', effect:{ corruption:6, mind:2 } },
+      { text:'捂住耳朵向帝皇祈祷', result:'你念诵祷文，低语渐渐退去。', effect:{ loyalty:5, will:3 } },
+      { text:'试图理解这些声音', result:'你窥见了一角真相，也失去了部分理智。', effect:{ corruption:4, mind:4 } }
+    ]},
+  { id:'h05', title:'机械残骸', text:'你在废料堆里发现了一具损坏的伺服机。',
+    choices:[
+      { text:'拆开研究它的结构', result:'你着迷于其中的齿轮与线路。', effect:{ mind:5 } },
+      { text:'卖给回收站', result:'换了一笔钱，够吃半个月。', effect:{ renown:3 } },
+      { text:'尝试修复它', result:'你花了整夜，它终于亮了一下。', effect:{ mind:3, body:1 } }
+    ]},
+  { id:'h06', title:'瘟疫爆发', text:'下巢爆发了奇怪的瘟疫，皮肤溃烂的人到处游荡。',
+    choices:[
+      { text:'照顾患病的邻居', result:'你感受到一种奇异的平和，祖父在看着你。', effect:{ will:4, body:2, corruption:4 } },
+      { text:'封死门窗逃离', result:'你活了下来，但心中留下阴影。', effect:{ body:3, renown:-1 } },
+      { text:'抢劫死者的财物', result:'你发了财，也染上了看不见的东西。', effect:{ renown:2, corruption:5 } }
+    ]},
+  { id:'h07', title:'地下竞技场', text:'有人把你带进了下巢的非法竞技场。',
+    choices:[
+      { text:'报名参赛', result:'你打了三场，赢了两场，观众在喊你的名字。', battle:{ name:'下巢角斗士', power:45 }, effect:{ body:5, renown:4 } },
+      { text:'下注赌博', result:'你押对了人，赚了一笔。', effect:{ renown:3, corruption:2 } },
+      { text:'观战学习技巧', result:'你记住了一些实用的格斗动作。', effect:{ mind:3, body:2 } }
+    ]},
+  { id:'h08', title:'数据终端', text:'你找到了一台还能工作的数据终端。',
+    choices:[
+      { text:'黑入系统', result:'你看到了不属于你该看的东西。', effect:{ mind:5, corruption:2 } },
+      { text:'阅读技术文档', result:'你学到了机神的语言。', effect:{ mind:4 } },
+      { text:'报告给当局', result:'一名官员记住了你的名字。', effect:{ loyalty:4, renown:2 } }
+    ]},
+  { id:'h09', title:'帮派招募', text:'一个帮派头目看上了你，想拉你入伙。',
+    choices:[
+      { text:'加入帮派', result:'你有了靠山，也有了敌人。', effect:{ renown:5, body:2, corruption:2 } },
+      { text:'拒绝', result:'你被揍了一顿，但守住了底线。', death:0.15, deathText:'帮派头目当晚派人烧了你的房间。', effect:{ loyalty:3, will:2 } },
+      { text:'假意加入，暗中观察', result:'你两边都不得罪，也两边都不信任。', effect:{ mind:3, renown:2 } }
+    ]},
+  { id:'h10', title:'帝皇神迹', text:'天空裂开一道金光，许多人跪下哭泣。',
+    choices:[
+      { text:'跪下祈祷', result:'你泪流满面，信仰前所未有地坚定。', effect:{ loyalty:6, will:3 } },
+      { text:'冷眼旁观', result:'你觉得那不过是亚空间的把戏。', effect:{ mind:2, corruption:3 } },
+      { text:'记录并研究', result:'你记下了光的颜色和持续时间。', effect:{ mind:4 } }
+    ]},
+  { id:'h11', title:'变异者的呼唤', text:'一个浑身长满眼睛的乞丐拉住你的脚踝，说了一句你听不懂的话。',
+    choices:[
+      { text:'听他讲完', result:'你的脑中多了一段不属于你的记忆。', effect:{ corruption:6, mind:3 } },
+      { text:'踢开他', result:'你挣脱后跑开，身后传来笑声。', effect:{ body:2, will:2 } },
+      { text:'用石头砸死他', result:'你砸了很多下，直到声音停下。', death:0.1, deathText:'你被巡逻的执法官看见，当场处决。', effect:{ body:3, corruption:3 } }
+    ]},
+  { id:'h12', title:'深坑边缘', text:'你和几个少年被追到了一处深不见底的竖井边缘。',
+    choices:[
+      { text:'跳下去，赌一把', result:'你落在了一个生锈的平台上，活了下来。', death:0.35, deathText:'你坠落数千尺，粉身碎骨。', effect:{ body:4, will:4 } },
+      { text:'转身迎战', result:'你赤手空拳打退了他们。', battle:{ name:'巢都混混', power:40 }, effect:{ body:3, renown:2 } },
+      { text:'求饶', result:'他们嘲笑着离开了。', effect:{ will:2, renown:-2 } }
+    ]},
+  { id:'h13', title:'机神的低语', text:'一台古老的终端在废墟中自行亮起，屏幕上滚动着二进制。',
+    choices:[
+      { text:'记下这些代码', result:'你脑中浮现出齿轮的图景。', effect:{ mind:5 } },
+      { text:'砸碎它', result:'你听见机魂在尖叫。', effect:{ body:3, corruption:4 } },
+      { text:'跪拜它', result:'你感到万机神在注视你。', effect:{ mind:3, loyalty:3 } }
+    ]},
+  { id:'h14', title:'黑市交易', text:'黑市商人向你推销一支"真正能杀死东西"的枪。',
+    choices:[
+      { text:'买下它', result:'枪很旧，但握在手里很踏实。', effect:{ body:3, renown:2 } },
+      { text:'抢走它', result:'你打晕商人，把枪和钱都拿走了。', death:0.15, deathText:'商人的护卫从背后开枪打死了你。', effect:{ body:4, renown:2, corruption:4 } },
+      { text:'拒绝', result:'你转身离开。', effect:{ will:2 } }
+    ]},
+  { id:'h15', title:'审判官降临', text:'一名审判官带着风暴兵突袭下巢，挨家挨户搜查异端。',
+    choices:[
+      { text:'主动上前举报邻居', result:'审判官微微颔首，你的名字被记录在案。', effect:{ loyalty:5, renown:3, corruption:2 } },
+      { text:'藏起邻居家的孩子', result:'你冒着被处决的风险，救下了一个孩子。', death:0.2, deathText:'风暴兵发现了你藏匿的孩子，当场处决了你。', effect:{ will:4, loyalty:3 } },
+      { text:'趁乱溜走', result:'你穿过屋脊，消失在阴影里。', effect:{ body:3, mind:2 } }
+    ]},
+  { id:'h16', title:'义体黑市', text:'一个下巢医师向你推销廉价的义体改造。',
+    choices:[
+      { text:'装上一对强化手臂', result:'你的握力倍增，但手术留下了疤痕。', effect:{ body:5, renown:-1 } },
+      { text:'拒绝，肉体纯净', result:'你保留了凡人的身体。', effect:{ will:3, loyalty:2 } },
+      { text:'举报这家诊所', result:'诊所被查封，你获得了报酬。', effect:{ loyalty:4, renown:3, corruption:-2 } }
+    ]},
+  { id:'h17', title:'废弃教堂', text:'你在废墟中找到一座被遗忘的教堂，祭坛上还燃着一根蜡烛。',
+    choices:[
+      { text:'跪下祈祷', result:'蜡烛的火苗轻轻晃动，你感到被注视。', effect:{ loyalty:5, will:3 } },
+      { text:'翻找祭坛下的暗格', result:'你找到一本发霉的日记。', effect:{ mind:4, corruption:3 } },
+      { text:'吹灭蜡烛', result:'黑暗里有什么东西动了。', effect:{ corruption:5, will:-2 } }
+    ]},
+  { id:'h18', title:'鼠人传说', text:'下水道深处传来窸窣声，有人说那是"下巢的鼠人"。',
+    choices:[
+      { text:'独自深入探查', result:'你看见了一个两脚行走的巨大老鼠，它看了你一眼就消失了。', effect:{ mind:4, corruption:4, body:2 } },
+      { text:'堵住下水道口', result:'你搬来石板，把洞口封死。', effect:{ body:4, will:2 } },
+      { text:'告诉帮派换取赏金', result:'帮派给了你一笔钱，但没人相信你的故事。', effect:{ renown:3, corruption:2 } }
+    ]},
+  { id:'h19', title:'行会学徒', text:'一个工程行会招学徒。学成后可以离开巢都。',
+    choices:[
+      { text:'报名学徒', result:'你跟着老技师学习齿轮和蒸汽。', effect:{ mind:5, body:2 } },
+      { text:'偷走行会图纸', result:'你带着一叠图纸跑掉了。', death:0.2, deathText:'行会的护卫追上了你，把你从高处扔了下去。', effect:{ mind:4, corruption:4 } },
+      { text:'拒绝，我不当学徒', result:'你继续混迹在巢都底层。', effect:{ body:3, renown:1 } }
+    ]},
+  { id:'h20', title:'亚空间裂缝', text:'你家的地板裂开一道口子，里面是粉红色的雾气。',
+    choices:[
+      { text:'探头往里看', result:'你看到了无限延伸的镜子。', death:0.3, deathText:'一只手从裂缝中伸出，把你拖了进去。', effect:{ corruption:8, mind:4 } },
+      { text:'用圣油封住裂缝', result:'裂缝缓缓闭合，你听见远处传来一声叹息。', effect:{ loyalty:5, will:3, corruption:-3 } },
+      { text:'叫来邻居一起看', result:'邻居当场疯了，被执法官带走。', effect:{ corruption:5, renown:1 } }
+    ]}
+];
+
+/* ============================
+   招募事件（5 个）
+============================ */
+const RECRUIT_EVENTS = [
+  { id:'r-sm', title:'阿斯塔特的召唤',
+    text:'一名身披动力甲的巨人降临下巢，他的目光穿过人群，停在你身上。"你，有成为阿斯塔特的潜质。"',
+    condition: s => s.body >= 50 && s.will >= 45 && s.loyalty >= 45 && s.corruption < 40,
+    choices:[
+      { text:'接受基因改造手术', result:'剧痛中，你的身体被重塑。你不再是凡人。', join:'sm' },
+      { text:'婉拒，我还想留在巢都', result:'巨人沉默片刻，转身离去。', effect:{ loyalty:-5 } }
+    ]},
+  { id:'r-ig', title:'星界军征兵',
+    text:'帝国卫队在巢都设了征兵站。"为帝皇而战，是凡人的至高荣耀！"',
+    condition: s => s.body >= 35 && s.loyalty >= 30,
+    choices:[
+      { text:'签字参军', result:'你领到了一把激光枪和一套制服。', join:'ig' },
+      { text:'转身离开', result:'征兵官在你背后啐了一口。', effect:{ loyalty:-5 } }
+    ]},
+  { id:'r-tech', title:'机械教招募',
+    text:'一名红袍技术神甫注意到你对机械的了解。"万机神需要新的仆人。"',
+    condition: s => s.mind >= 50,
+    choices:[
+      { text:'宣誓效忠万机神', result:'你被授予第一块义体。', join:'tech' },
+      { text:'拒绝', result:'技术神甫没有感情地转过身。', effect:{} }
+    ]},
+  { id:'r-chaos', title:'混沌的低语',
+    text:'亚空间的低语在你脑中响起："你的潜力不该被帝皇的谎言束缚。"',
+    condition: s => s.corruption >= 40,
+    choices:[
+      { text:'拥抱混沌', result:'你感到某种东西在体内苏醒。', join:'chaos' },
+      { text:'以帝皇之名拒绝', result:'你咬破舌尖，用疼痛驱散低语。', effect:{ loyalty:5, will:3, corruption:-5 } }
+    ]},
+  { id:'r-rebel', title:'叛军的旗帜',
+    text:'一群武装分子找到了你。"帝国抛弃了我们。加入我们，推翻这个腐朽的体制。"',
+    condition: s => s.renown >= 40 && s.loyalty < 50,
+    choices:[
+      { text:'加入叛军', result:'你接过一把枪，站在了帝皇的对立面。', join:'rebel' },
+      { text:'拒绝', result:'他们记住了你的脸。', effect:{ loyalty:3 } }
+    ]}
+];
+
+/* ============================
+   路径事件池
+============================ */
+const PATH_EVENTS = {
+  sm: [
+    { id:'sm01', title:'训练笼', text:'你被命令进入训练笼，与同袍进行无甲格斗。',
+      choices:[
+        { text:'全力以赴，击倒对手', result:'你击倒对手，教官微微点头。', battle:{ name:'同袍战士', power:75 }, effect:{ body:5, progress:25 } },
+        { text:'观察对手弱点', result:'你找到破绽，用巧劲取胜。', effect:{ mind:3, progress:18 } },
+        { text:'保存体力，稳扎稳打', result:'你坚持到最后，虽未取胜但未受伤。', effect:{ will:2, progress:12 } }
+      ]},
+    { id:'sm02', title:'战场部署', text:'你被投入一场对抗兽人的战斗。',
+      choices:[
+        { text:'冲锋在前', result:'你撕开了兽人的阵线，兄弟们在喊你的名字。', battle:{ name:'兽人老大', power:90 }, effect:{ body:4, renown:4, progress:25 } },
+        { text:'掩护队友', result:'你掩护了受伤的兄弟，赢得了战团的尊重。', effect:{ will:4, renown:2, progress:20 } },
+        { text:'战术撤退', result:'你保存了战斗力量，但心中有些不甘。', effect:{ mind:4, progress:18 } }
+      ]},
+    { id:'sm03', title:'帝皇的考验', text:'战团牧师要求你进行一场苦修。',
+      choices:[
+        { text:'苦修祈祷', result:'你在祷文中找到了平静。', effect:{ will:5, loyalty:4, progress:22 } },
+        { text:'战斗冥想', result:'你在冥想中模拟了千种战斗。', effect:{ body:3, mind:3, progress:20 } },
+        { text:'质疑教条', result:'你开始怀疑战团的一些做法。', effect:{ mind:5, corruption:5, progress:15 } }
+      ]},
+    { id:'sm04', title:'深入异形巢穴', text:'你独自深入一座基因窃取者的巢穴。',
+      choices:[
+        { text:'正面突入', result:'你在尸山血海中杀出一条路。', battle:{ name:'基因窃取者族长', power:110 }, death:0.2, deathText:'族长撕裂了你的动力甲。', effect:{ body:6, renown:5, progress:30 } },
+        { text:'潜伏渗透', result:'你悄无声息地放置了热熔炸弹。', effect:{ mind:5, progress:24 } },
+        { text:'召唤援军', result:'你呼叫了终结者小队。', effect:{ renown:2, will:3, progress:18 } }
+      ]},
+    { id:'sm05', title:'战团内部政治', text:'两名士官在争夺下一任连长的位置，你被双方拉拢。',
+      choices:[
+        { text:'效忠其中一方', result:'你选择了靠山，也选择了敌人。', effect:{ renown:4, mind:2, progress:22 } },
+        { text:'保持中立', result:'你谁也不帮，但两边都对你心生芥蒂。', effect:{ will:4, renown:-2, progress:16 } },
+        { text:'暗中挑拨', result:'你巧妙利用了两人的矛盾，渔翁得利。', effect:{ mind:5, corruption:3, progress:20 } }
+      ]},
+    { id:'sm06', title:'死亡守望任务', text:'你被派往死亡守望执行一项秘密任务。',
+      choices:[
+        { text:'接受任务', result:'你孤身一人进入了异形巢穴。', battle:{ name:'异形领主', power:120 }, death:0.25, deathText:'你被异形撕成了碎片。', effect:{ body:5, renown:5, progress:28 } },
+        { text:'拒绝任务', result:'你被记上了一笔不服从的记录。', effect:{ renown:-3, will:3, progress:14 } },
+        { text:'推荐同袍去', result:'你的兄弟去了，再也没回来。', effect:{ renown:2, corruption:3, progress:18 } }
+      ]},
+    { id:'sm07', title:'混沌星际战士', text:'你在战场上遇到了一名昔日的同袍，如今已堕落为混沌星际战士。',
+      choices:[
+        { text:'与他决斗', result:'你们的动力剑碰撞出火花。', battle:{ name:'堕落者', power:130 }, death:0.3, deathText:'他念出你曾经的名字，然后将你斩于剑下。', effect:{ body:6, renown:5, progress:30 } },
+        { text:'劝他回头', result:'他沉默了很久，然后举起了链锯剑。', death:0.25, deathText:'你的仁慈葬送了自己。', effect:{ will:5, progress:22 } },
+        { text:'呼叫轨道轰炸', result:'整片区域被夷为平地。', effect:{ mind:5, renown:3, progress:24 } }
+      ]}
+  ],
+  khorne: [
+    { id:'kh01', title:'血祭', text:'恐虐要求鲜血。祭坛上绑着一名俘虏。',
+      choices:[
+        { text:'献祭俘虏', result:'鲜血洒在祭坛上，你感到力量涌入。', effect:{ body:5, corruption:5, progress:25 } },
+        { text:'挑战营地最强的战士', result:'你击败了他，将他的颅骨献上。', battle:{ name:'恐虐冠军', power:100 }, effect:{ body:6, progress:28 } },
+        { text:'放走弱者', result:'恐虐的怒火在你心中灼烧。', effect:{ will:3, corruption:-3, progress:10 } }
+      ]},
+    { id:'kh02', title:'颅骨王座', text:'你在一座由颅骨堆成的王座前停下。',
+      choices:[
+        { text:'收集更多颅骨', result:'你屠杀了整个村庄。', effect:{ body:4, corruption:4, progress:22 } },
+        { text:'磨砺武器', result:'你花了一整夜磨斧，斧刃映出你的脸。', effect:{ mind:3, body:3, progress:20 } },
+        { text:'向血神咆哮', result:'你的咆哮回荡在亚空间。', effect:{ renown:4, progress:18 } }
+      ]},
+    { id:'kh03', title:'血神试炼', text:'恐虐亲自设下试炼：独自冲入敌阵。',
+      choices:[
+        { text:'独自冲入敌阵', result:'你杀了三十七人，身上没有一处完好。', battle:{ name:'帝国卫队连队', power:120 }, death:0.25, deathText:'你被激光枪打成筛子。', effect:{ body:6, progress:30 } },
+        { text:'召唤血魔助战', result:'血魔撕裂了敌人，也撕裂了你的部分人性。', effect:{ corruption:6, progress:25 } },
+        { text:'冷静杀戮', result:'你没有狂怒，只有精准。', effect:{ mind:4, progress:20 } }
+      ]},
+    { id:'kh04', title:'斩首行动', text:'你潜入敌军指挥部，目标只有一个：指挥官的头颅。',
+      choices:[
+        { text:'正面突入', result:'你砍下了指挥官的头，但被包围了。', battle:{ name:'卫队连', power:110 }, death:0.3, deathText:'你用尽最后一口气，仍然倒在了枪林弹雨中。', effect:{ body:5, renown:5, progress:28 } },
+        { text:'伪装潜入', result:'你换上敌人的军服，悄然接近目标。', effect:{ mind:5, corruption:4, progress:24 } },
+        { text:'放火制造混乱', result:'你在营地放火，趁乱取下了头颅。', effect:{ body:3, mind:3, progress:22 } }
+      ]},
+    { id:'kh05', title:'血神祭坛', text:'一座巨大的黄铜祭坛从地下升起，八道血河从它脚下流过。',
+      choices:[
+        { text:'跳入血河沐浴', result:'血河灼烧着你的皮肤，你感到前所未有的力量。', death:0.2, deathText:'血河吞噬了你的身体。', effect:{ body:7, corruption:6, progress:30 } },
+        { text:'献上自己的鲜血', result:'你割开手臂，鲜血流入祭坛。', effect:{ will:5, corruption:5, progress:24 } },
+        { text:'砸碎祭坛', result:'黄铜碎裂，恐虐的怒火随之而来。', effect:{ body:4, corruption:-3, will:5, progress:14 } }
+      ]},
+    { id:'kh06', title:'不敬者的惩罚', text:'一名混沌信徒拒绝为血神献祭，众人等着你处理他。',
+      choices:[
+        { text:'亲手处决他', result:'你砍下了他的头，众人欢呼。', effect:{ body:4, corruption:5, progress:24 } },
+        { text:'放他逃走', result:'你给了他一匹血契兽，让他跑。', effect:{ will:4, corruption:-2, progress:16 } },
+        { text:'让他向你挑战', result:'他扑了上来，你赤手空拳迎战。', battle:{ name:'背叛者', power:80 }, effect:{ body:5, renown:3, progress:22 } }
+      ]}
+  ],
+  nurgle: [
+    { id:'nu01', title:'疫病花园', text:'祖父的花园在你眼前展开，腐烂与生机并存。',
+      choices:[
+        { text:'培育新的瘟疫', result:'你培育出一种美丽的孢子。', effect:{ mind:4, corruption:5, progress:25 } },
+        { text:'照顾病患', result:'你温柔地照顾着溃烂的病人。', effect:{ will:5, corruption:4, progress:22 } },
+        { text:'忍受痛苦', result:'你任由蛆虫啃噬身体，感到平静。', effect:{ body:4, will:4, progress:20 } }
+      ]},
+    { id:'nu02', title:'祖父的礼物', text:'纳垢赐予你一份礼物：一种永不愈合的伤口。',
+      choices:[
+        { text:'接受赐福', result:'伤口中爬出小恶魔，它们叫你父亲。', effect:{ body:5, corruption:6, progress:28 } },
+        { text:'传播疫病', result:'你走遍三个巢都，留下无数礼物。', effect:{ renown:3, corruption:4, progress:22 } },
+        { text:'研究解药', result:'你试图理解祖父的智慧。', effect:{ mind:6, progress:18 } }
+      ]},
+    { id:'nu03', title:'腐朽仪式', text:'一场盛大的腐朽仪式即将开始。',
+      choices:[
+        { text:'献祭生命', result:'祭品化为脓水，滋养了花园。', effect:{ corruption:6, progress:26 } },
+        { text:'冥想腐朽', result:'你理解了万物终将归于腐朽。', effect:{ will:5, progress:20 } },
+        { text:'与蛆虫共生', result:'蛆虫在你体内安家。', effect:{ body:4, corruption:4, progress:22 } }
+      ]},
+    { id:'nu04', title:'瘟疫飞船', text:'一艘巨大的腐化飞船从天而降，船体上爬满了会呼吸的苔藓。',
+      choices:[
+        { text:'登上飞船', result:'你在飞船内部看到了一个完整的生态系统。', death:0.2, deathText:'飞船的防御孢子将你分解成了养分。', effect:{ mind:6, corruption:6, progress:28 } },
+        { text:'留在船外迎接', result:'你张开双臂，迎接祖父的恩赐。', effect:{ will:5, corruption:5, progress:24 } },
+        { text:'烧毁飞船', result:'你点燃了飞船，火光中你听见了歌声。', effect:{ body:4, corruption:-3, progress:14 } }
+      ]},
+    { id:'nu05', title:'与慈父的对话', text:'在梦中，你听见了一个温和而慈祥的声音："孩子，你愿意接受我的爱吗？"',
+      choices:[
+        { text:'接受他的爱', result:'你在梦中哭了，醒来后伤口不再疼痛。', effect:{ will:6, corruption:7, progress:30 } },
+        { text:'询问代价', result:'慈父笑了："代价？没有代价，只有爱。"', effect:{ mind:6, corruption:4, progress:22 } },
+        { text:'拒绝', result:'你在梦中惊醒，胸口留下了一个腐烂的印记。', effect:{ body:3, corruption:-2, progress:12 } }
+      ]},
+    { id:'nu06', title:'传播福音', text:'一个帝国的农业世界正在闹饥荒，祖父希望你送点"礼物"过去。',
+      choices:[
+        { text:'送去瘟疫', result:'三十亿人在三天内化为脓水。', effect:{ renown:5, corruption:7, progress:30 } },
+        { text:'送去腐化的粮食', result:'人们吃了之后，脸上露出了平静的微笑。', effect:{ mind:4, corruption:5, progress:24 } },
+        { text:'送去真正的粮食', result:'你违背了祖父，挽救了千万生命。', effect:{ will:6, loyalty:3, corruption:-5, progress:10 } }
+      ]}
+  ],
+  slaanesh: [
+    { id:'sl01', title:'欢愉之宴', text:'一场为黑暗王子举办的盛宴正在举行。',
+      choices:[
+        { text:'纵情享乐', result:'你体验了凡人无法想象的欢愉。', effect:{ renown:5, corruption:5, progress:25 } },
+        { text:'诱惑他人', result:'你让三名贵族为你自杀。', effect:{ renown:6, mind:3, progress:24 } },
+        { text:'克制欲望', result:'你拒绝了诱惑，代价是剧痛。', effect:{ will:5, corruption:-3, progress:12 } }
+      ]},
+    { id:'sl02', title:'完美追求', text:'色孽要求你追求极致的完美。',
+      choices:[
+        { text:'极致训练', result:'你的身体达到了凡人极限。', effect:{ body:5, progress:26 } },
+        { text:'艺术表演', result:'你的表演让观众在狂喜中死去。', effect:{ renown:5, mind:3, progress:22 } },
+        { text:'感官探索', result:'你切开了自己的神经，只为感受更多。', death:0.2, deathText:'你在极致的欢愉中失去了生命。', effect:{ corruption:5, progress:20 } }
+      ]},
+    { id:'sl03', title:'黑暗王子试炼', text:'守秘者的目光落在你身上。',
+      choices:[
+        { text:'献祭灵魂', result:'你献上了一个纯洁的灵魂。', effect:{ corruption:7, progress:30 } },
+        { text:'魅惑对手', result:'你的对手成为了你的玩物。', effect:{ renown:4, mind:4, progress:22 } },
+        { text:'追求极致痛苦', result:'你在痛苦中找到了欢愉。', effect:{ body:4, corruption:4, progress:24 } }
+      ]},
+    { id:'sl04', title:'欢愉之殿', text:'你走进一座由水晶和血肉构成的殿堂，里面传来无法描述的声音。',
+      choices:[
+        { text:'进入殿堂深处', result:'你看见了色孽的某位大魔，正在独自起舞。', death:0.25, deathText:'舞者看了你一眼，你的身体就溶解了。', effect:{ corruption:7, mind:4, progress:28 } },
+        { text:'在门口观看', result:'你站在门外看了一整夜。', effect:{ will:4, corruption:4, progress:20 } },
+        { text:'逃离殿堂', result:'你逃出了殿堂，但再也没能忘记那些声音。', effect:{ body:3, corruption:-2, progress:12 } }
+      ]},
+    { id:'sl05', title:'与守秘者的舞蹈', text:'一名守秘者向你伸出手，邀你共舞一曲。',
+      choices:[
+        { text:'接受邀请', result:'你与它共舞，每一步都在消耗你的灵魂。', death:0.3, deathText:'舞蹈结束时，你已经不再是人类。', effect:{ corruption:8, renown:5, progress:30 } },
+        { text:'拒绝', result:'守秘者收起微笑，消失在镜中。', effect:{ will:5, corruption:-3, progress:14 } },
+        { text:'观看它的舞步', result:'你记住了几个舞步，日后可以模仿。', effect:{ mind:5, corruption:4, progress:22 } }
+      ]},
+    { id:'sl06', title:'黑暗王子的抚摸', text:'色孽的触手穿过帷幕，轻轻抚摸你的脸颊。',
+      choices:[
+        { text:'沉浸其中', result:'你感受到了前所未有的快感，也失去了部分记忆。', effect:{ corruption:7, renown:3, progress:28 } },
+        { text:'挣扎反抗', result:'你咬破嘴唇，痛感让你清醒。', effect:{ will:6, corruption:-3, progress:14 } },
+        { text:'请求更多', result:'触手收紧，你听见了黑暗王子的笑声。', effect:{ body:4, corruption:6, progress:24 } }
+      ]}
+  ],
+  tzeentch: [
+    { id:'tz01', title:'阴谋编织', text:'奸奇要求你编织一场阴谋。',
+      choices:[
+        { text:'策划政变', result:'一个行星总督在三天内倒台。', effect:{ mind:6, corruption:4, progress:25 } },
+        { text:'阅读禁书', result:'你读到了一切可能的未来。', effect:{ mind:5, corruption:5, progress:24 } },
+        { text:'散布谣言', result:'一个谎言重复千遍，成了真理。', effect:{ renown:3, mind:3, progress:20 } }
+      ]},
+    { id:'tz02', title:'万变之道', text:'变化之主向你展示了他的本质。',
+      choices:[
+        { text:'学习法术', result:'你的手指间跳动着蓝色火焰。', effect:{ mind:6, corruption:4, progress:28 } },
+        { text:'变换形态', result:'你暂时变成了另一个人。', effect:{ corruption:5, body:3, progress:22 } },
+        { text:'预测未来', result:'你看到了九种结局。', effect:{ mind:5, will:3, progress:20 } }
+      ]},
+    { id:'tz03', title:'命运的骰子', text:'奸奇掷出了骰子，让你选择。',
+      choices:[
+        { text:'献祭记忆', result:'你忘记了母亲的脸，换来了禁忌知识。', effect:{ mind:7, corruption:5, progress:30 } },
+        { text:'操纵命运', result:'你改写了三个人的命运。', effect:{ mind:5, renown:4, progress:22 } },
+        { text:'反抗命运', result:'你拒绝被安排，奸奇笑了。', effect:{ will:5, progress:18 } }
+      ]},
+    { id:'tz04', title:'迷宫图书馆', text:'你走进一座永无止境的图书馆，每本书都在同时被翻开和合上。',
+      choices:[
+        { text:'阅读一本书', result:'你读完了一本关于你尚未写下的书。', effect:{ mind:7, corruption:4, progress:28 } },
+        { text:'烧毁一座书架', result:'火焰蔓延开去，图书馆笑了。', death:0.2, deathText:'火焰忽然调转方向，把你吞噬。', effect:{ corruption:6, renown:3, progress:22 } },
+        { text:'寻找出路', result:'你花了三年才走出来。', effect:{ will:5, mind:4, progress:20 } }
+      ]},
+    { id:'tz05', title:'与万变魔君的棋局', text:'一名万变魔君坐在棋盘前，邀请你下一局。',
+      choices:[
+        { text:'执白先行', result:'棋局持续了七天七夜。', death:0.25, deathText:'你输了。你的存在被从现实中抹去。', effect:{ mind:8, corruption:5, progress:30 } },
+        { text:'执黑后行', result:'你选择了被动，却暗藏杀机。', effect:{ mind:6, will:4, progress:24 } },
+        { text:'掀翻棋盘', result:'魔君大笑，消失在了棋盘里。', effect:{ will:6, corruption:-3, progress:14 } }
+      ]},
+    { id:'tz06', title:'禁忌预言', text:'你从一本禁书中读到了一段预言，关于你自己的死亡。',
+      choices:[
+        { text:'尝试改变预言', result:'你改变了一些细节，但预言仍然成立。', death:0.3, deathText:'你越是挣扎，越是在预言之中。', effect:{ mind:7, corruption:5, progress:28 } },
+        { text:'接受预言', result:'你平静地合上了书。', effect:{ will:6, mind:4, progress:22 } },
+        { text:'把预言告诉别人', result:'七个人因你而死，八个人因你而生。', effect:{ renown:5, corruption:4, progress:24 } }
+      ]}
+  ],
+  chaos: [
+    { id:'ch01', title:'无分混沌', text:'四位神祇的目光同时落在你身上。',
+      choices:[
+        { text:'向诸神祈祷', result:'四位神祇各赐你一份礼物。', effect:{ corruption:5, progress:24 } },
+        { text:'掠夺村庄', result:'你烧杀抢掠，无所不为。', effect:{ body:4, renown:4, progress:22 } },
+        { text:'研究混沌', result:'你试图理解亚空间的本质。', effect:{ mind:5, corruption:4, progress:20 } }
+      ]},
+    { id:'ch02', title:'黑暗远征', text:'你加入了黑色远征的部队。',
+      choices:[
+        { text:'冲锋陷阵', result:'你第一个冲上了帝国舰船。', battle:{ name:'帝国舰船守军', power:105 }, effect:{ body:5, renown:4, progress:26 } },
+        { text:'指挥部队', result:'你指挥一支小队攻下了整个甲板。', effect:{ mind:4, renown:5, progress:24 } },
+        { text:'献祭俘虏', result:'你向诸神献上三十名俘虏。', effect:{ corruption:6, progress:22 } }
+      ]},
+    { id:'ch03', title:'晋升之路', text:'混沌领主的位置空了出来。',
+      choices:[
+        { text:'挑战冠军', result:'你击败了他，将他的尸体挂在舰首。', battle:{ name:'混沌冠军', power:130 }, death:0.25, deathText:'冠军的链锯剑劈开了你的头颅。', effect:{ body:6, progress:30 } },
+        { text:'密谋夺权', result:'你的对手在睡梦中被献祭。', effect:{ mind:5, renown:4, progress:25 } },
+        { text:'接受变异', result:'你长出第三条手臂和一对角。', effect:{ body:4, corruption:6, progress:24 } }
+      ]},
+    { id:'ch04', title:'复仇之魂号', text:'你被带上了复仇之魂号，站在荷鲁斯的雕像前。',
+      choices:[
+        { text:'跪拜', result:'雕像的眼睛亮了一下。', effect:{ corruption:6, will:4, progress:28 } },
+        { text:'拒绝跪拜', result:'你站在原地，众人沉默。', effect:{ body:4, will:5, corruption:-2, progress:14 } },
+        { text:'在雕像上刻字', result:'你刻下了自己的名字。', death:0.25, deathText:'雕像突然塌陷，将你埋葬。', effect:{ renown:6, corruption:5, progress:24 } }
+      ]},
+    { id:'ch05', title:'黑暗使徒的布道', text:'一名黑暗使徒在台上宣称：诸神已死，我们才是新的神。',
+      choices:[
+        { text:'附和布道', result:'你加入了合唱，声音震动了甲板。', effect:{ renown:5, corruption:5, progress:26 } },
+        { text:'刺杀使徒', result:'你在讲道中途动手。', battle:{ name:'黑暗使徒', power:115 }, death:0.3, deathText:'使徒的灵能击碎了你的身体。', effect:{ body:6, renown:5, progress:28 } },
+        { text:'沉默', result:'你什么都没做，但有人记住了你。', effect:{ mind:5, will:3, progress:18 } }
+      ]},
+    { id:'ch06', title:'恶魔引擎献祭', text:'一名战帮工程师要为你打造一台专属恶魔引擎。',
+      choices:[
+        { text:'献祭自己的一部分灵魂', result:'引擎启动了，你失去了一段记忆。', effect:{ body:5, mind:-3, corruption:6, progress:28 } },
+        { text:'献祭一百名俘虏', result:'引擎轰鸣着站了起来。', effect:{ corruption:5, renown:4, progress:24 } },
+        { text:'拒绝献祭', result:'工程师看了你一眼，转身离去。', effect:{ will:5, corruption:-3, progress:12 } }
+      ]}
+  ],
+  rebel: [
+    { id:'rb01', title:'暴动', text:'巢都的工人们开始暴动。',
+      choices:[
+        { text:'带头冲锋', result:'你冲在最前面，手中的铁管沾满鲜血。', battle:{ name:'执法官小队', power:65 }, effect:{ body:4, renown:5, progress:24 } },
+        { text:'煽动群众', result:'你的演说让三千人举起了拳头。', effect:{ renown:6, mind:3, progress:26 } },
+        { text:'暗中策划', result:'你在阴影中安排了整场暴动。', effect:{ mind:5, progress:20 } }
+      ]},
+    { id:'rb02', title:'游击战', text:'你们在巢都底层展开了游击战。',
+      choices:[
+        { text:'伏击帝国巡逻队', result:'你们全歼了巡逻队，缴获了武器。', battle:{ name:'帝国巡逻队', power:80 }, effect:{ body:4, mind:3, progress:24 } },
+        { text:'招募新兵', result:'你的队伍壮大到五百人。', effect:{ renown:5, progress:22 } },
+        { text:'抢夺补给', result:'你们攻下了一个补给站。', effect:{ body:3, renown:4, progress:20 } }
+      ]},
+    { id:'rb03', title:'起义领袖', text:'是时候决定这场起义的走向了。',
+      choices:[
+        { text:'发表演说', result:'你的名字传遍了整个星区。', effect:{ renown:7, progress:28 } },
+        { text:'亲自上阵', result:'你带头攻下了总督府。', battle:{ name:'总督卫队', power:110 }, death:0.2, deathText:'你倒在了总督府的大门前。', effect:{ body:5, renown:4, progress:24 } },
+        { text:'建立政权', result:'你开始管理解放区。', effect:{ mind:5, renown:5, progress:26 } }
+      ]},
+    { id:'rb04', title:'审判官的拷问', text:'一名审判官俘虏了你，试图从你口中撬出情报。',
+      choices:[
+        { text:'咬死不开口', result:'他折磨了你三天三夜，你什么都没说。', death:0.25, deathText:'审讯的第四天，你停止了呼吸。', effect:{ will:8, renown:4, progress:28 } },
+        { text:'假装合作', result:'你给了他假情报，他放了你。', effect:{ mind:6, corruption:3, progress:24 } },
+        { text:'趁其不备反击', result:'你挣开锁链，扑向了他。', battle:{ name:'审判官', power:120 }, death:0.3, deathText:'审判官的灵能击穿了你的心脏。', effect:{ body:6, renown:3, progress:26 } }
+      ]},
+    { id:'rb05', title:'被腐蚀的指挥官', text:'你的上司开始表现出诡异的症状：皮肤下有什么在游动。',
+      choices:[
+        { text:'向部队举报他', result:'他被处决，你接管了他的位置。', effect:{ renown:6, will:4, progress:28 } },
+        { text:'秘密处决他', result:'你在夜里动手，没人知道。', effect:{ mind:5, corruption:4, progress:22 } },
+        { text:'尝试救治他', result:'你为他祈祷，但他还是死了。', effect:{ will:5, loyalty:3, progress:20 } }
+      ]},
+    { id:'rb06', title:'暴君的崛起', text:'你控制的行星开始有人称呼你为"总督"。',
+      choices:[
+        { text:'接受这个称号', result:'你在总督府大厅里加冕。', effect:{ renown:7, corruption:4, progress:30 } },
+        { text:'拒绝，我是解放者', result:'你把权力交给了人民议会。', effect:{ will:6, renown:3, progress:22 } },
+        { text:'清洗反对者', result:'十七个家族在一夜之间消失了。', effect:{ renown:5, corruption:5, progress:26 } }
+      ]}
+  ],
+  ig: [
+    { id:'ig01', title:'新兵训练', text:'你被分配到星界军新兵连。',
+      choices:[
+        { text:'苦练射击', result:'你的激光枪射击成绩全连第一。', effect:{ body:5, progress:24 } },
+        { text:'学习战术', result:'你熟读了《步兵战术手册》。', effect:{ mind:4, progress:22 } },
+        { text:'鼓舞战友', result:'你成为了新兵们的精神支柱。', effect:{ renown:3, will:3, progress:20 } }
+      ]},
+    { id:'ig02', title:'战场洗礼', text:'你第一次踏上真正的战场。',
+      choices:[
+        { text:'冲锋陷阵', result:'你率先冲入敌阵，连长记住了你的名字。', battle:{ name:'叛军小队', power:70 }, effect:{ body:5, renown:4, progress:26 } },
+        { text:'坚守阵地', result:'你守住了阵地，直到援军到来。', effect:{ will:5, progress:24 } },
+        { text:'救助伤员', result:'你冒着炮火救回了三名战友。', effect:{ will:4, renown:3, progress:22 } }
+      ]},
+    { id:'ig03', title:'帝皇的士兵', text:'一场决定性战役即将打响。',
+      choices:[
+        { text:'死战不退', result:'你身负重伤，但阵地未失。', death:0.25, deathText:'你被炮弹直接命中。', effect:{ body:5, will:4, progress:28 } },
+        { text:'战术指挥', result:'你指挥一个连队完成了包围。', effect:{ mind:5, renown:4, progress:25 } },
+        { text:'向上级建言', result:'你的建议被采纳，挽救了整个团。', effect:{ renown:5, mind:3, progress:22 } }
+      ]},
+    { id:'ig04', title:'政委的注视', text:'一名政委在巡视时停在你的面前："士兵，你为什么而战？"',
+      choices:[
+        { text:'为帝皇而战', result:'他点了点头，转身离开。', effect:{ loyalty:6, will:4, progress:26 } },
+        { text:'为战友而战', result:'他沉默了很久，然后笑了。', effect:{ will:5, renown:3, progress:22 } },
+        { text:'为活下去而战', result:'他拔出了手枪，又收了回去。', effect:{ body:4, mind:3, progress:18 } }
+      ]},
+    { id:'ig05', title:'帝国海军的支援', text:'帝国海军要求你们团派出一支突击队，配合登陆作战。',
+      choices:[
+        { text:'主动请缨', result:'你带领小队登上了敌舰，在甲板上展开了血战。', battle:{ name:'混沌战帮', power:115 }, death:0.25, deathText:'你在甲板上被等离子炮击中，灰飞烟灭。', effect:{ body:6, renown:5, progress:28 } },
+        { text:'推荐别的连队', result:'他们去了，无一生还。', effect:{ mind:4, corruption:3, progress:18 } },
+        { text:'策划登陆方案', result:'你的方案救了很多人。', effect:{ mind:6, renown:4, progress:26 } }
+      ]},
+    { id:'ig06', title:'极限战士的降临', text:'一支极限战士小队空降到你们的阵地。',
+      choices:[
+        { text:'请求加入他们', result:'一名星际战士看了你一眼，点了点头。', battle:{ name:'混沌冠军', power:130 }, death:0.3, deathText:'你在冠军的链锯剑下化为碎片。', effect:{ body:7, renown:5, progress:30 } },
+        { text:'掩护他们', result:'你为星际战士提供了火力掩护。', effect:{ body:4, will:4, progress:24 } },
+        { text:'远远看着', result:'你看着他们战斗，心中升起一种向往。', effect:{ mind:5, loyalty:4, progress:22 } }
+      ]}
+  ],
+  tech: [
+    { id:'tc01', title:'机械研习', text:'你在火星的铸造神殿中研习。',
+      choices:[
+        { text:'拆解研究', result:'你拆开了一台兰德掠袭者的引擎。', effect:{ mind:6, progress:25 } },
+        { text:'修复机魂', result:'你安抚了一台愤怒的机魂。', effect:{ mind:5, will:3, progress:24 } },
+        { text:'探索废墟', result:'你在废墟中找到了一块 STC 碎片。', effect:{ mind:4, body:3, progress:20 } }
+      ]},
+    { id:'tc02', title:'机神启示', text:'万机神向你展示了一段代码。',
+      choices:[
+        { text:'深度冥想', result:'你理解了二进制语言的本质。', effect:{ mind:5, will:4, progress:24 } },
+        { text:'改造自身', result:'你为自己装上了第四只手。', effect:{ body:4, mind:4, progress:26 } },
+        { text:'研究禁忌', result:'你接触了铁人叛乱的资料。', effect:{ mind:7, corruption:4, progress:28 } }
+      ]},
+    { id:'tc03', title:'失落的 STC', text:'在废弃的锻造神殿深处，你发现了一台还在运行的古老终端。屏幕上闪烁着 STC 的认证印记。',
+      choices:[
+        { text:'破解 STC 加密', result:'你的手指在键盘上飞舞，机魂在你耳边低语。', death:0.25, deathText:'STC 的防御系统释放了一道电弧，烧毁了你的大脑。', effect:{ mind:8, progress:30 }, onSuccess:{ stcFound:true } },
+        { text:'报告给上级', result:'你把发现上报了机械教。', effect:{ renown:6, mind:3, progress:22 } },
+        { text:'悄悄保存数据', result:'你把 STC 的核心数据藏在了自己的存储器里。', effect:{ mind:6, corruption:3, progress:26 }, onSuccess:{ stcFound:true } }
+      ]},
+    { id:'tc04', title:'铸造神殿的秘密', text:'你在神殿最深处发现了一间被封印的实验室。',
+      choices:[
+        { text:'破开封印进入', result:'你看到了一具尚未完成的铁人。', death:0.3, deathText:'铁人的核心还在运作，它认出了你。', effect:{ mind:8, corruption:6, progress:30 } },
+        { text:'报告给大贤者', result:'大贤者亲自前来，表扬了你。', effect:{ renown:6, loyalty:4, progress:24 } },
+        { text:'重新封印', result:'你用圣油和祷文加固了封印。', effect:{ will:5, mind:4, progress:22 } }
+      ]},
+    { id:'tc05', title:'与机魂的融合', text:'一台古老的机魂愿意与你进行意识融合，但只有一半成功率。',
+      choices:[
+        { text:'尝试融合', result:'你的意识与机魂在数据流中对话。', death:0.4, deathText:'融合失败，你的意识被数据洪流撕碎。', effect:{ mind:10, corruption:4, progress:32 } },
+        { text:'拒绝融合', result:'你保留了纯粹的自我。', effect:{ will:6, mind:4, progress:20 } },
+        { text:'请求部分融合', result:'你只融合了一小部分，代价是左手不再属于你。', effect:{ mind:6, body:3, progress:26 } }
+      ]},
+    { id:'tc06', title:'黑暗时代的遗物', text:'你在一颗死亡世界的废墟中，发现了一件黑暗时代遗留的装置。',
+      choices:[
+        { text:'启动它', result:'装置亮起，周围的空间扭曲了一瞬。', death:0.35, deathText:'装置的力场将你抹除，甚至连灰烬都没留下。', effect:{ mind:9, corruption:5, progress:30 } },
+        { text:'带回火星研究', result:'你把它小心翼翼地装进了密封容器。', effect:{ mind:6, renown:4, progress:26 } },
+        { text:'就地销毁', result:'你启动了自毁程序，装置化为一堆废铁。', effect:{ will:5, loyalty:5, progress:20 } }
+      ]}
+  ]
+};
+
+/* ============================
+   神选试炼
+============================ */
+const GOD_TRIALS = {
+  khorne:   { text:'血神的目光穿过帷幕注视着你。八重之路上，你的颅骨即将成为王座的一部分。你可以选择升魔——将自己彻底献给恐虐，成为不朽的血碾大魔。' },
+  nurgle:   { text:'祖父慈爱地注视着你。他的花园为你留了一席之地。你可以选择升魔——成为不朽的大不净者，将腐朽的恩赐洒向群星。' },
+  slaanesh: { text:'黑暗王子的目光在你身上游走。完美的极致就在前方。你可以选择升魔——成为守秘者，永恒地追寻极致的欢愉。' },
+  tzeentch: { text:'万变之主在你耳边低语。一切皆有可能，一切都在计划中。你可以选择升魔——成为万变魔君，操纵无尽的命运。' },
+  chaos:    { text:'四位神祇同时向你伸出手。无分混沌的顶点就是成为恶魔王子。你可以选择升魔，或者停留在凡人的巅峰。' },
+  sm:       { text:'帝皇的金光洒在你身上。你听见了古老的呼唤。你可以尝试成为活圣人——承载帝皇的意志，成为不朽的传奇。' },
+  ig:       { text:'帝皇的目光穿过星海注视着你。一个凡人能走多远？你可以尝试成为活圣人，或者以总督的身份终老。' },
+  tech:     { text:'万机神的齿轮在你脑中转动。你的血肉过于脆弱。你可以尝试将意识融入机魂——成为永恒的存在。' },
+  rebel:    { text:'你站在一座被解放的行星之巅。没有人能再命令你。你可以选择成为这颗星球真正的暴君，或者别的什么。' }
+};
+
+function triggerGodTrial() {
+  const isChaos = CHAOS_PATHS.includes(S.path);
+  const text = GOD_TRIALS[S.path] || '你已站在凡人的顶点。命运的分叉出现在你面前。';
+  S.phase = 'trial';
+  addLog('════════════════════════', 'promo');
+  addLog('【终极试炼：神选之路】', 'promo');
+  addLog(text, 'event');
+  S.currentEvent = {
+    title:'终极试炼：神选之路', text,
+    choices:[
+      { text: isChaos ? '接受升魔仪式，将自己献给黑暗' : '接受终极转化，超越凡人之躯', ascend:true, result:'仪式开始了。' },
+      { text:'拒绝。以凡人之躯，站在顶点。', reject:true, result:'你退回了阴影之中。' }
+    ]
+  };
+}
+
+/* ============================
+   晋升检查
+============================ */
+function checkPromotion() {
+  if (S.phase !== 'path' || S.rank >= 4) return;
+  while (S.progress >= 100 && S.rank < 4) {
+    S.progress -= 100;
+    S.rank++;
+    addLog(`★★★ 晋升！你现在是【${PATHS[S.path].name} · ${PATHS[S.path].ranks[S.rank]}】`, 'promo');
+    if (S.rank >= 4) {
+      S.progress = 0;
+      triggerGodTrial();
+      return;
+    }
+  }
+}
+
+/* ============================
+   意识形态拉扯
+============================ */
+function checkIdeologicalClash() {
+  if (CHAOS_PATHS.includes(S.path) && S.loyalty >= 70 && Math.random() < 0.5) {
+    addLog('你心中的帝皇信仰仍在抵抗。混沌的赐福无法触及你。这次行动以失败告终。', 'sys');
+    applyEffect({ will:-3, progress:5 });
+    return true;
+  }
+  if (IMPERIAL_PATHS.includes(S.path) && S.corruption >= 70 && Math.random() < 0.5) {
+    addLog('亚空间的低语干扰了你的行动。你听见了不该听见的声音。这次行动以失败告终。', 'dark');
+    applyEffect({ will:-3, progress:5 });
+    return true;
+  }
+  return false;
+}
+
+/* ============================
+   混沌神判定
+============================ */
+function getChaosGod() {
+  const stats = { khorne:S.body, nurgle:S.will, slaanesh:S.renown, tzeentch:S.mind };
+  const sorted = Object.entries(stats).sort((a,b) => b[1]-a[1]);
+  return sorted[0][1] - sorted[1][1] >= 10 ? sorted[0][0] : 'chaos';
+}
+
+/* ============================
+   死亡检查
+============================ */
+function checkDeath(choice) {
+  if (choice.death === undefined) return false;
+  if (Math.random() < choice.death) {
+    const isCorrupt = S.corruption > 50;
+    addLog(choice.deathText || '你死了。', 'death');
+    addLog(isCorrupt
+      ? '你的灵魂被亚空间吞噬。你成为了无数低语中的一个，永远在黑暗中漂泊。'
+      : '你的灵魂回归帝皇的怀抱。你的一生虽短，但你从未背叛。',
+      isCorrupt ? 'death' : 'sys');
+    S.ended = true; S.phase = 'ended'; S.currentEvent = null;
+    saveGame(); render();
+    return true;
+  }
+  return false;
+}
+
+/* ============================
+   界面切换
+============================ */
+function showScreen(id) {
+  ['menuScreen','nameScreen','gameScreen','quitScreen'].forEach(s => {
+    document.getElementById(s).style.display = 'none';
+  });
+  document.getElementById(id).style.display = 'flex';
+}
+
+/* ============================
+   渲染
+============================ */
+function updateStatus() {
+  const el = document.getElementById('status');
+  let html = `<span>年龄 ${S.age}</span>`;
+  if (S.path) html += `<span class="path">${PATHS[S.path].name} · ${PATHS[S.path].ranks[S.rank]}</span>`;
+  if (S.cheatMode) {
+    html += `
+      <span class="cheat">肉体 ${S.body}</span>
+      <span class="cheat">意志 ${S.will}</span>
+      <span class="cheat">智慧 ${S.mind}</span>
+      <span class="cheat">声望 ${S.renown}</span>
+      <span class="cheat corrupt">腐化 ${S.corruption}</span>
+      <span class="cheat">忠诚 ${S.loyalty}</span>
+      <span class="cheat">事件 ${S.eventCount}</span>
+      <span class="cheat">进度 ${S.progress}</span>`;
+  }
+  el.innerHTML = html;
+
+  const wrap = document.getElementById('progressWrap');
+  if (S.phase === 'path' && !S.ended) {
+    wrap.classList.add('on');
+    const nextRank = PATHS[S.path].ranks[Math.min(S.rank+1, 4)];
+    document.getElementById('progressLabel').textContent = `晋升进度：${S.progress} / 100 → ${nextRank}`;
+    document.getElementById('progressFill').style.width = S.progress + '%';
+  } else wrap.classList.remove('on');
+}
+
+function renderLog() {
+  const el = document.getElementById('log');
+  el.innerHTML = S.log.map(l => `<p class="${l.cls}">${l.text}</p>`).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+function renderChoices() {
+  const el = document.getElementById('choices');
+  el.innerHTML = '';
+
+  if (S.ended) {
+    const btn = document.createElement('button');
+    btn.textContent = '重 新 开 始';
+    btn.style.cssText = 'text-align:center;letter-spacing:3px;padding:16px;font-size:16px;background:#2a1a10;border-color:#7a4a1a;color:#e0a040;font-weight:bold;';
+    btn.onclick = () => {
+      try {
+        clearSave();
+        S = DEFAULT_STATE();
+        recentEvents = [];
+        document.getElementById('log').innerHTML = '';
+        document.getElementById('choices').innerHTML = '';
+        backToMenu();
+        setMenuNote('✓ 游戏已重置。', 'ok');
+      } catch (e) {
+        console.error('重置失败，回退到重新加载:', e);
+        try { localStorage.removeItem('hiveFate_v3_save'); } catch(_) {}
+        location.reload();
+      }
+    };
+    el.appendChild(btn);
+    return;
+  }
+
+  if (S.currentEvent) {
+    S.currentEvent.choices.forEach((c, i) => {
+      const btn = document.createElement('button');
+      let text = c.text;
+      if (S.cheatMode) {
+        const eff = formatEffect(c.effect);
+        if (eff) text += `<span class="hint">[${eff}]</span>`;
+        if (c.death !== undefined) text += `<span class="risk">[死亡 ${Math.round(c.death*100)}%]</span>`;
+        if (c.battle) text += `<span class="risk">[战斗：${c.battle.name} 战力${c.battle.power}]</span>`;
+        if (c.join) text += `<span class="hint">[进入路线：${PATHS[c.join].name}]</span>`;
+        if (c.ascend) text += `<span class="hint">[神选]</span>`;
+        if (c.reject) text += `<span class="hint">[拒绝神选]</span>`;
+      }
+      btn.innerHTML = text;
+      btn.onclick = () => choose(i);
+      el.appendChild(btn);
+    });
+  }
+}
+
+function render() { updateStatus(); renderLog(); renderChoices(); }
+
+/* ============================
+   选择处理
+============================ */
+function choose(idx) {
+  const ev = S.currentEvent;
+  const c = ev.choices[idx];
+
+  if (checkDeath(c)) return;
+
+  if (c.ascend) {
+    const isChaos = CHAOS_PATHS.includes(S.path);
+    const rate = isChaos
+      ? (S.corruption >= 80 ? 0.9 : S.corruption >= 60 ? 0.6 : 0.3)
+      : (S.loyalty >= 80 ? 0.9 : S.loyalty >= 60 ? 0.6 : 0.3);
+    addLog(`【${ev.title}】你选择了：${c.text}`, 'event');
+    if (Math.random() < rate) {
+      addLog('仪式成功。你的形态开始扭曲。血肉、骨骼、灵魂——一切都在重塑。', 'promo');
+      endGame('ascend');
+    } else {
+      addLog('仪式失败。你的灵魂在亚空间的风暴中撕裂。', 'death');
+      addLog('你没有成为神选。你成为了虚无。', 'death');
+      endGame('ascendFail');
+    }
+    return;
+  }
+
+  if (c.reject) {
+    addLog(`【${ev.title}】你选择了：${c.text}`, 'event');
+    addLog('你拒绝了神选。你以凡人之躯，站在了顶点。', 'sys');
+    endGame('reject');
+    return;
+  }
+
+  if (c.join) {
+    S.path = c.join;
+    S.phase = 'path';
+    S.rank = 0;
+    S.progress = 0;
+    recentEvents = [];
+    addLog(`【${ev.title}】${c.text}`, 'event');
+    addLog(c.result, 'good');
+    addLog(`你踏上了【${PATHS[S.path].name}】的道路。当前阶位：${PATHS[S.path].ranks[0]}`, 'promo');
+    S.currentEvent = null;
+    advanceAge();
+    saveGame(); render(); nextEvent();
+    return;
+  }
+
+  if (S.phase === 'path' && checkIdeologicalClash()) {
+    if (S.phase !== 'trial') S.currentEvent = null;
+    advanceAge();
+    saveGame(); render(); nextEvent();
+    return;
+  }
+
+  if (c.battle) {
+    const result = resolveBattle(c.battle);
+    addLog(`⚔ ${result.text}`, 'battle');
+    if (!result.win) {
+      applyEffect({ body:-5, will:-2 });
+      addLog('你在战斗中受了伤。', 'dark');
+      if (S.phase === 'trial') { saveGame(); render(); return; }
+      S.currentEvent = null;
+      advanceAge();
+      saveGame(); render(); nextEvent();
+      return;
+    }
+  }
+
+  addLog(`【${ev.title}】你选择了：${c.text}`, 'event');
+  addLog(c.result, c.effect && c.effect.corruption > 0 ? 'dark' : '');
+  applyEffect(c.effect);
+
+  if (S.phase === 'trial') { saveGame(); render(); return; }
+
+  if (c.onSuccess) {
+    Object.entries(c.onSuccess).forEach(([k,v]) => { S[k] = v; });
+    if (c.onSuccess.stcFound) addLog('你获得了 STC 的核心数据。这是人类失落的知识。', 'promo');
+  }
+
+  S.currentEvent = null;
+
+  if (S.path === 'chaos' && S.rank >= 1) {
+    const god = getChaosGod();
+    if (god !== 'chaos' && S.corruption >= 60) {
+      S.path = god;
+      recentEvents = [];
+      addLog(`你的灵魂已被【${PATHS[god].name}】的意志占据。你不再是无所属的混沌信徒。`, 'dark');
+    }
+  }
+
+  advanceAge();
+  saveGame(); render();
+  nextEvent();
+}
+
+function advanceAge() {
+  S.eventCount++;
+  if (S.eventCount % EVENTS_PER_YEAR === 0) {
+    S.age++;
+    addLog(`—— 时光流逝，你 ${S.age} 岁了 ——`, 'age');
+  }
+}
+
+function nextEvent() {
+  if (S.ended || S.phase === 'trial') return;
+  if (S.phase === 'hive' && S.age > 25) { endGame('hive'); return; }
+  if (S.age > 45) { endGame('age'); return; }
+
+  if (S.phase === 'hive') {
+    const recruitPool = RECRUIT_EVENTS.filter(e =>
+      !S.rejected.includes(e.id) && e.condition(S));
+    if (recruitPool.length > 0 && Math.random() < 0.7) {
+      S.currentEvent = pick(recruitPool);
+      S.rejected.push(S.currentEvent.id);
+    } else {
+      S.currentEvent = pickFreshEvent(HIVE_EVENTS);
+    }
+  } else if (S.phase === 'path') {
+    S.currentEvent = pickFreshEvent(PATH_EVENTS[S.path]);
+  }
+
+  addLog(`【${S.currentEvent.title}】${S.currentEvent.text}`, 'event');
+  saveGame(); render();
+}
+
+/* ============================
+   结局
+============================ */
+function endGame(type) {
+  S.ended = true; S.phase = 'ended'; S.currentEvent = null;
+  const total = S.body + S.will + S.mind + S.renown;
+
+  if (type === 'ascend') {
+    addLog('════════════════════════', 'promo');
+    if (S.path === 'sm') addLog(`你成为了活圣人。帝皇的意志在你体内燃烧。从此，你的名字成为传说。`, 'promo');
+    else if (S.path === 'tech') addLog(`你的意识融入了万机神的齿轮。你成为了永恒机魂的一部分。`, 'promo');
+    else {
+      addLog(`你升魔成功。你成为了【${PATHS[S.path].god}】麾下的大魔，不朽的恶魔王子。`, 'promo');
+      addLog(`从此，你的名字被凡人低声念诵——既是诅咒，也是恐惧。`, 'promo');
+    }
+  } else if (type === 'ascendFail') {
+    addLog('════════════════════════', 'death');
+    addLog(`你的灵魂在亚空间的风暴中撕裂。你的名字被抹去。`, 'death');
+    addLog(`你没有成为神选。你成为了虚无中的一缕低语。`, 'death');
+  } else if (type === 'reject') {
+    addLog('════════════════════════', 'sys');
+    addLog(`你拒绝了神选，以凡人之躯站在了【${PATHS[S.path].name} · ${PATHS[S.path].ranks[4]}】的顶点。`, 'sys');
+    addLog(`在战锤的黑暗银河中，你活成了一个传奇。`, 'sys');
+    if (S.path === 'sm' && S.corruption >= 60) addLog('你最终被腐化吞噬。你成为了混沌星际战士，一名黑暗使徒。', 'dark');
+    if (S.path === 'ig' && S.corruption >= 60) addLog('你背叛了帝皇。你的部队变成了混沌战帮，你的名字被列为亵渎。', 'dark');
+    if (S.path === 'tech' && S.stcFound) addLog('你保存了 STC 的核心数据。在你死后，这份知识将改变整个星区的命运。', 'promo');
+  } else if (type === 'hive') {
+    addLog('════════════════════════', 'sys');
+    addLog(`${S.name}，你在巢都中度过了一生。没有人记得你的名字。`, 'sys');
+    addLog(`你的尸体被回收成蛋白质块，喂给下一批少年。`, 'sys');
+    addLog(`这就是巢都千万凡人的命运。`, 'sys');
+  } else if (type === 'age') {
+    addLog('════════════════════════', 'sys');
+    addLog(`${S.name}，你的身体不再年轻。作为一名【${PATHS[S.path].ranks[S.rank]}】，你选择了退场。`, 'sys');
+    if (S.path === 'sm' && S.corruption >= 60) addLog('但你最终被腐化吞噬。你成为了混沌星际战士。', 'dark');
+    if (S.path === 'ig' && S.corruption >= 60) addLog('你的部队变成了混沌战帮。你的名字被列为亵渎。', 'dark');
+    if (S.path === 'tech' && S.stcFound) addLog('你保存的 STC 数据将在你死后改变整个星区。', 'promo');
+    addLog(`最终属性：肉体${S.body} 意志${S.will} 智慧${S.mind} 声望${S.renown} 腐化${S.corruption} 忠诚${S.loyalty}`, 'sys');
+    addLog(`总分 ${total}。`, 'sys');
+  }
+  saveGame(); render();
+}
+
+/* ============================
+   主菜单
+============================ */
+function backToMenu() {
+  document.getElementById('log').innerHTML = '';
+  document.getElementById('choices').innerHTML = '';
+  showScreen('menuScreen');
+  updateMenuButtons();
+}
+
+function updateMenuButtons() {
+  const loadBtn = document.getElementById('menuLoad');
+  const saveBtn = document.getElementById('menuSave');
+  const saved = loadGame();
+  loadBtn.disabled = !saved;
+  saveBtn.disabled = !S.started || S.ended;
+}
+
+function setMenuNote(text, cls = '') {
+  const el = document.getElementById('menuNote');
+  el.textContent = text;
+  el.className = 'menu-note ' + cls;
+}
+
+document.getElementById('menuStart').onclick = () => {
+  document.getElementById('nameField').value = '';
+  setMenuNote('');
+  showScreen('nameScreen');
+  setTimeout(() => document.getElementById('nameField').focus(), 50);
+};
+
+document.getElementById('menuSave').onclick = () => {
+  if (!S.started || S.ended) {
+    setMenuNote('没有进行中的游戏。', 'warn');
+    return;
+  }
+  saveGame();
+  setMenuNote('✓ 游戏已保存到本地浏览器。', 'ok');
+};
+
+document.getElementById('menuLoad').onclick = () => {
+  const saved = loadGame();
+  if (!saved) { setMenuNote('没有找到存档。', 'warn'); return; }
+  S = saved;
+  S.currentEvent = null;
+  S.ended = false;
+  recentEvents = [];
+  document.getElementById('log').innerHTML = '';
+  document.getElementById('choices').innerHTML = '';
+  showScreen('gameScreen');
+  addLog('—— 存档已载入 ——', 'sys');
+  if (S.phase === 'trial') {
+    S.phase = 'path';
+    triggerGodTrial();
+  } else if (!S.currentEvent) {
+    nextEvent();
+    return;
+  }
+  render();
+};
+
+document.getElementById('menuQuit').onclick = () => {
+  showScreen('quitScreen');
+};
+
+/* ============================
+   命名界面
+============================ */
+document.getElementById('nameConfirm').onclick = () => {
+  const name = document.getElementById('nameField').value.trim() || '无名者';
+  S = DEFAULT_STATE();
+  S.name = name;
+  S.cheatMode = (name === '作弊者');
+  S.started = true;
+  recentEvents = [];
+  document.getElementById('log').innerHTML = '';
+  document.getElementById('choices').innerHTML = '';
+  showScreen('gameScreen');
+
+  addLog(`欢迎，${S.name}。`, 'sys');
+  addLog('你出生在下巢。雾气、机油、尸臭和祷文，是你对世界最初的记忆。', 'sys');
+  if (S.cheatMode) addLog('【警告：检测到调试者权限。属性面板已开放。】', 'cheat');
+  addLog('你的选择将决定你的命运。每做出 4 次选择，你就会长大一岁。', 'sys');
+
+  saveGame();
+  render();
+  nextEvent();
+};
+
+document.getElementById('nameBack').onclick = () => {
+  setMenuNote('');
+  backToMenu();
+};
+document.getElementById('nameField').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('nameConfirm').click();
+});
+
+/* ============================
+   游戏内返回主菜单
+============================ */
+document.getElementById('backToMenu').onclick = () => {
+  saveGame();
+  backToMenu();
+  setMenuNote('游戏已自动保存。', 'ok');
+};
+
+/* ============================
+   退出界面
+============================ */
+document.getElementById('quitBack').onclick = () => {
+  setMenuNote('');
+  backToMenu();
+};
+
+/* ============================
+   初始化
+============================ */
+(function init() {
+  showScreen('menuScreen');
+  updateMenuButtons();
+})();
+</script>
+</body>
+</html>
