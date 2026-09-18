@@ -268,9 +268,8 @@ function resolveBattle(enemy) {
     ? `你战胜了【${enemy.name}】（你 ${pRoll} vs 敌 ${eRoll}）`
     : `你被【${enemy.name}】击败（你 ${pRoll} vs 敌 ${eRoll}）` };
 }
-
 /* ============================
-   巢都事件池（20 个）
+   巢都事件池（25 个）
 ============================ */
 const HIVE_EVENTS = [
   { id:'h01', title:'帮派斗殴', text:'下巢走廊里两个帮派正在火并，你被卷了进去。',
@@ -392,11 +391,41 @@ const HIVE_EVENTS = [
       { text:'探头往里看', result:'你看到了无限延伸的镜子。', death:0.3, deathText:'一只手从裂缝中伸出，把你拖了进去。', effect:{ corruption:8, mind:4 } },
       { text:'用圣油封住裂缝', result:'裂缝缓缓闭合，你听见远处传来一声叹息。', effect:{ loyalty:5, will:3, corruption:-3 } },
       { text:'叫来邻居一起看', result:'邻居当场疯了，被执法官带走。', effect:{ corruption:5, renown:1 } }
+    ]},
+  { id:'h21', title:'废弃地铁', text:'你发现了一条被遗忘的地铁隧道，里面传来金属摩擦声。',
+    choices:[
+      { text:'独自深入', result:'你在隧道尽头发现了一节还在运行的列车。', effect:{ mind:4, body:3, corruption:3 } },
+      { text:'叫上帮派兄弟一起', result:'你们平分了列车上的物资。', effect:{ renown:4, body:2 } },
+      { text:'堵住入口', result:'你搬来石板，把隧道封死了。', effect:{ will:3, body:2 } }
+    ]},
+  { id:'h22', title:'黑市医生', text:'一个自称"缝合者"的黑市医生在下巢开了间地下诊所。',
+    choices:[
+      { text:'做义体改造', result:'你换上了一对二手强化臂。', effect:{ body:5, renown:-1 } },
+      { text:'举报他', result:'诊所被查封，你获得了一笔赏金。', effect:{ loyalty:5, renown:3, corruption:-2 } },
+      { text:'偷走他的工具', result:'你摸走了一套手术器械。', death:0.15, deathText:'缝合者发现了你，用手术刀割开了你的喉咙。', effect:{ mind:4, corruption:4 } }
+    ]},
+  { id:'h23', title:'失踪的邻居', text:'你这一层的三户邻居在一夜之间消失了。',
+    choices:[
+      { text:'独自调查', result:'你在地下室发现了一个献祭现场。', effect:{ mind:5, corruption:5, will:2 } },
+      { text:'报告给执法官', result:'一个执法官点了点头，什么也没做。', effect:{ loyalty:3, renown:2 } },
+      { text:'搬家', result:'你搬到了另一层，把这件事抛在脑后。', effect:{ body:3, will:2, renown:-1 } }
+    ]},
+  { id:'h24', title:'钟声回响', text:'夜深时，一座早已废弃的教堂传来了钟声，整个下巢都听见了。',
+    choices:[
+      { text:'前往教堂', result:'教堂空无一人，但钟在响。', effect:{ corruption:5, will:3, mind:3 } },
+      { text:'在窗口观望', result:'钟声响了七下，然后停止了。', effect:{ mind:4, loyalty:2 } },
+      { text:'向帝皇祈祷', result:'你整夜未眠，却感到前所未有的平静。', effect:{ loyalty:6, will:4 } }
+    ]},
+  { id:'h25', title:'兜帽人', text:'一个穿着兜帽的人拦住你，他的眼睛里有两个瞳孔。',
+    choices:[
+      { text:'听他要说什么', result:'"你想要力量吗？"他问。', effect:{ corruption:7, mind:3 } },
+      { text:'推开他', result:'他消失了，但你感觉他在某处看着你。', effect:{ body:3, will:3 } },
+      { text:'对他开枪', result:'子弹穿过了他，他仍在微笑。', death:0.2, deathText:'他伸手碰了碰你的额头，你就死了。', effect:{ body:3, corruption:5 } }
     ]}
 ];
 
 /* ============================
-   招募事件（5 个）
+   招募事件（7 个）
 ============================ */
 const RECRUIT_EVENTS = [
   { id:'r-sm', title:'阿斯塔特的召唤',
@@ -433,11 +462,25 @@ const RECRUIT_EVENTS = [
     choices:[
       { text:'加入叛军', result:'你接过一把枪，站在了帝皇的对立面。', join:'rebel' },
       { text:'拒绝', result:'他们记住了你的脸。', effect:{ loyalty:3 } }
+    ]},
+  { id:'r-khorne', title:'血神战帮',
+    text:'一支混沌战帮袭击了巢都。为首的战士身穿血红色的动力甲，他扫视俘虏，目光停在你身上。',
+    condition: s => s.body >= 55 && s.corruption >= 35 && !s.path,
+    choices:[
+      { text:'接受血神的邀请', result:'他递给你一把链锯斧，你接了过来。', join:'khorne' },
+      { text:'拒绝', result:'他大笑："血神会等到你改变主意的那天。"', effect:{ will:4, corruption:2 } }
+    ]},
+  { id:'r-nurgle', title:'慈父的召唤',
+    text:'一个浑身长满孢子的朝圣者走到你面前，微笑着说："孩子，祖父在等你。"',
+    condition: s => s.will >= 50 && s.corruption >= 35 && !s.path,
+    choices:[
+      { text:'跟随他', result:'你被带进了一座隐蔽的花园。', join:'nurgle' },
+      { text:'婉拒', result:'他微笑着离开了，留下一朵发着微光的花。', effect:{ will:3, corruption:2 } }
     ]}
 ];
 
 /* ============================
-   路径事件池
+   路径事件池（每条 12 个）
 ============================ */
 const PATH_EVENTS = {
   sm: [
@@ -482,6 +525,36 @@ const PATH_EVENTS = {
         { text:'与他决斗', result:'你们的动力剑碰撞出火花。', battle:{ name:'堕落者', power:130 }, death:0.3, deathText:'他念出你曾经的名字，然后将你斩于剑下。', effect:{ body:6, renown:5, progress:30 } },
         { text:'劝他回头', result:'他沉默了很久，然后举起了链锯剑。', death:0.25, deathText:'你的仁慈葬送了自己。', effect:{ will:5, progress:22 } },
         { text:'呼叫轨道轰炸', result:'整片区域被夷为平地。', effect:{ mind:5, renown:3, progress:24 } }
+      ]},
+    { id:'sm08', title:'侦察兵巡逻', text:'你被编入侦察兵小队，深入死亡世界执行侦察。',
+      choices:[
+        { text:'独自脱离小队侦察', result:'你发现了敌人的主基地坐标。', effect:{ mind:5, body:3, renown:3, progress:24 } },
+        { text:'与小队协同作战', result:'你们完整绘制了敌区地图。', effect:{ renown:4, will:3, progress:22 } },
+        { text:'遭遇敌军', result:'你们被兽人巡逻队发现。', battle:{ name:'兽人侦察队', power:85 }, effect:{ body:5, renown:3, progress:20 } }
+      ]},
+    { id:'sm09', title:'智库的预言', text:'一名智库馆长召见了你，他看到了关于你的一段预言。',
+      choices:[
+        { text:'聆听预言', result:'他告诉你，你将在某个时刻面临抉择。', effect:{ mind:4, will:4, progress:22 } },
+        { text:'请求解读', result:'他摇了摇头："未来从来不止一种。"', effect:{ mind:6, corruption:3, progress:24 } },
+        { text:'质疑预言', result:'他沉默片刻："那就让我看看你能走多远。"', effect:{ will:6, renown:-1, progress:18 } }
+      ]},
+    { id:'sm10', title:'终结者十字章', text:'第一连的终结者小队出现了空缺，指挥官问你愿不愿意接受十字章。',
+      choices:[
+        { text:'接受十字章', result:'你穿上了终结者动力甲，沉得几乎无法移动。', battle:{ name:'异形大军', power:115 }, death:0.2, deathText:'厚重的装甲救了你的战友，但没能救你。', effect:{ body:6, renown:5, progress:30 } },
+        { text:'婉拒，继续当战术战士', result:'你知道自己的长处不在这里。', effect:{ will:4, mind:4, progress:20 } },
+        { text:'推荐另一名兄弟', result:'你的谦虚赢得了全连的尊重。', effect:{ renown:5, will:3, progress:22 } }
+      ]},
+    { id:'sm11', title:'战团圣物', text:'战团圣物库中，一件古老的动力剑被选中给你使用。',
+      choices:[
+        { text:'接受圣物', result:'剑柄上的铭文记录了三百年的战斗。', battle:{ name:'恶魔王子', power:135 }, death:0.25, deathText:'你握着圣剑倒下，剑仍然在发光。', effect:{ body:5, renown:6, progress:30 } },
+        { text:'谦让给年长者', result:'你选择了一把普通的链锯剑。', effect:{ will:5, renown:2, progress:18 } },
+        { text:'请求为圣物祝福', result:'牧师为剑与你的灵魂共同祈祷。', effect:{ loyalty:5, will:4, progress:22 } }
+      ]},
+    { id:'sm12', title:'净化使命', text:'一个巢都世界被基因窃取者渗透。你的战团奉命净化整个下巢。',
+      choices:[
+        { text:'从上层开始清剿', result:'你逐层向下屠杀，最后在底层遇到了族长。', battle:{ name:'基因窃取者族长', power:125 }, death:0.25, deathText:'族长从阴影中扑出，撕裂了你的喉咙。', effect:{ body:6, renown:5, progress:30 } },
+        { text:'封锁所有出口', result:'你让数百万人自生自灭，但阻止了污染扩散。', effect:{ mind:7, loyalty:4, progress:26 } },
+        { text:'寻找感染源头', result:'你在教堂地下找到了 Patriarch 的巢穴。', effect:{ mind:6, corruption:4, progress:28 } }
       ]}
   ],
   khorne: [
@@ -520,6 +593,42 @@ const PATH_EVENTS = {
         { text:'亲手处决他', result:'你砍下了他的头，众人欢呼。', effect:{ body:4, corruption:5, progress:24 } },
         { text:'放他逃走', result:'你给了他一匹血契兽，让他跑。', effect:{ will:4, corruption:-2, progress:16 } },
         { text:'让他向你挑战', result:'他扑了上来，你赤手空拳迎战。', battle:{ name:'背叛者', power:80 }, effect:{ body:5, renown:3, progress:22 } }
+      ]},
+    { id:'kh07', title:'手无寸铁者', text:'一个平民跪在你面前，颤抖着举起了双手。',
+      choices:[
+        { text:'斩下他的头颅', result:'血神满意地咆哮。', effect:{ body:4, corruption:6, progress:25 } },
+        { text:'放他走', result:'你感到一股怒意在体内翻涌，不是针对他，而是针对自己。', effect:{ will:5, corruption:-3, progress:14 } },
+        { text:'给他一把武器', result:'他拿起剑向你冲来。你给了他一个体面的死亡。', effect:{ body:3, renown:2, corruption:3, progress:20 } }
+      ]},
+    { id:'kh08', title:'恐虐猎犬', text:'一只巨大的血肉猎犬从亚空间裂缝中爬出，它认出了你身上的血神印记。',
+      choices:[
+        { text:'与它搏斗', result:'你徒手撕开了它的喉咙。', battle:{ name:'血肉猎犬', power:105 }, death:0.2, deathText:'猎犬咬碎了你的喉咙。', effect:{ body:7, renown:4, progress:28 } },
+        { text:'命令它', result:'它低下了头，从此跟随你。', effect:{ renown:5, corruption:5, progress:24 } },
+        { text:'献上祭品让它离开', result:'你割下自己的一块肉喂给它。', effect:{ body:-3, will:5, corruption:4, progress:22 } }
+      ]},
+    { id:'kh09', title:'与吞世者的决斗', text:'一名吞世者军团的老兵要与你决斗，赢的人获得血神的青睐。',
+      choices:[
+        { text:'接受决斗', result:'你们的链锯剑碰撞出火花。', battle:{ name:'吞世者老兵', power:135 }, death:0.3, deathText:'"你的血不错，可惜太少了。"他这么说。', effect:{ body:7, renown:6, progress:32 } },
+        { text:'拒绝决斗', result:'他啐了一口，转身离去。', effect:{ renown:-3, will:4, corruption:-2, progress:12 } },
+        { text:'偷袭', result:'你在他转身时动手。', battle:{ name:'吞世者老兵', power:135 }, death:0.35, deathText:'他早就料到你会偷袭。', effect:{ body:5, corruption:6, renown:-2, progress:26 } }
+      ]},
+    { id:'kh10', title:'颅骨之海', text:'你站在一片由骷髅堆成的海洋边，远处的血神在咆哮。',
+      choices:[
+        { text:'纵身跃入', result:'你沉入海底，又浮了起来。', death:0.35, deathText:'你消失在了颅骨之下。', effect:{ body:8, corruption:7, progress:32 } },
+        { text:'在岸边收集颅骨', result:'你带走了三颗最精美的颅骨。', effect:{ renown:4, corruption:5, progress:24 } },
+        { text:'高声赞美血神', result:'你的声音传遍了八重之路。', effect:{ renown:6, corruption:5, progress:26 } }
+      ]},
+    { id:'kh11', title:'对血神的疑问', text:'你第一次问自己：杀戮真的有意义吗？',
+      choices:[
+        { text:'继续杀戮，不再思考', result:'你把疑问埋进心底。', effect:{ body:5, corruption:6, progress:26 } },
+        { text:'向血神质问', result:'一道闪电劈在你身边。你活下来了，但血神的怒火烧穿了你的左眼。', effect:{ body:3, will:6, corruption:-3, progress:16 } },
+        { text:'寻找答案', result:'你在另一个战团的图书馆里翻找古籍。', effect:{ mind:6, corruption:3, progress:22 } }
+      ]},
+    { id:'kh12', title:'血神竞技场', text:'一座由黄铜和颅骨构成的无尽竞技场在你面前展开。',
+      choices:[
+        { text:'参加百人斗', result:'你独自面对一百名战士。', battle:{ name:'百人军团', power:135 }, death:0.35, deathText:'你杀了七十三个，然后倒下了。', effect:{ body:8, renown:6, progress:34 } },
+        { text:'挑战竞技场冠军', result:'一名高出你两个头的战士走了出来。', battle:{ name:'竞技场冠军', power:140 }, death:0.3, deathText:'他的斧头劈开了你的胸甲。', effect:{ body:7, renown:5, progress:32 } },
+        { text:'献上自己的血', result:'你割开手臂，血流入沙地。', effect:{ will:6, corruption:6, progress:28 } }
       ]}
   ],
   nurgle: [
@@ -558,6 +667,42 @@ const PATH_EVENTS = {
         { text:'送去瘟疫', result:'三十亿人在三天内化为脓水。', effect:{ renown:5, corruption:7, progress:30 } },
         { text:'送去腐化的粮食', result:'人们吃了之后，脸上露出了平静的微笑。', effect:{ mind:4, corruption:5, progress:24 } },
         { text:'送去真正的粮食', result:'你违背了祖父，挽救了千万生命。', effect:{ will:6, loyalty:3, corruption:-5, progress:10 } }
+      ]},
+    { id:'nu07', title:'瘟疫钟声', text:'远处传来一声钟响，所有人同时停了下来，脸上露出平静的微笑。',
+      choices:[
+        { text:'跟着钟声走', result:'你走进了一座被废弃的教堂，钟声来自地下。', effect:{ mind:5, corruption:5, progress:26 } },
+        { text:'捂住耳朵', result:'钟声仍然穿透了你的灵魂。', effect:{ will:5, corruption:4, progress:22 } },
+        { text:'摧毁钟', result:'钟碎了，但声音还在。', death:0.2, deathText:'钟声淹没了你的意识。', effect:{ body:4, corruption:-2, progress:14 } }
+      ]},
+    { id:'nu08', title:'慈父的坩埚', text:'一口巨大的坩埚在你面前沸腾，里面煮着所有疾病的精华。',
+      choices:[
+        { text:'饮下坩埚', result:'你的身体开始融化又重组。', death:0.3, deathText:'你化成了坩埚里的一部分。', effect:{ body:7, corruption:7, progress:32 } },
+        { text:'用坩埚炼制新病', result:'你炼出一种美丽的蓝色孢子。', effect:{ mind:6, corruption:5, progress:26 } },
+        { text:'打翻坩埚', result:'液体流了一地，长出无数小生物。', effect:{ renown:4, corruption:4, progress:22 } }
+      ]},
+    { id:'nu09', title:'死亡守卫的邀请', text:'一名死亡守卫军团的战士找到你，说他们的战团长想见你。',
+      choices:[
+        { text:'接受邀请', result:'你在一艘腐化战舰上见到了战团长。', effect:{ renown:6, corruption:6, progress:30 } },
+        { text:'拒绝', result:'他面无表情地离开了。', effect:{ will:5, corruption:-3, progress:14 } },
+        { text:'偷袭他', result:'你在他转身时动手。', battle:{ name:'死亡守卫', power:130 }, death:0.35, deathText:'他的动力甲连划痕都没有留下。', effect:{ body:6, corruption:4, renown:3, progress:26 } }
+      ]},
+    { id:'nu10', title:'熵之花园', text:'祖父的花园深处，你看到一朵花正在绽放，也在腐烂。',
+      choices:[
+        { text:'摘下它', result:'花在你手中化为脓水，你喝了下去。', effect:{ body:6, corruption:7, progress:30 } },
+        { text:'守护它', result:'你每天来看它，直到它彻底腐烂。', effect:{ will:7, corruption:5, progress:26 } },
+        { text:'把它移植到别的世界', result:'你在三个行星上种下了它的种子。', effect:{ renown:6, corruption:6, progress:28 } }
+      ]},
+    { id:'nu11', title:'末日的温柔', text:'一个垂死的帝国士兵请求你结束他的痛苦。',
+      choices:[
+        { text:'赐予他祖父的礼物', result:'他微笑着变成了花园的一部分。', effect:{ will:6, corruption:6, progress:28 } },
+        { text:'用刀结束他', result:'他的血溅在你身上，你感到空虚。', effect:{ body:4, corruption:-2, progress:14 } },
+        { text:'救治他', result:'你把他带回花园。他活了下来，也成了信徒。', effect:{ renown:5, corruption:4, progress:24 } }
+      ]},
+    { id:'nu12', title:'慈父的圣杯', text:'一只由骨头和苔藓制成的圣杯出现在你面前，杯中是绿色的液体。',
+      choices:[
+        { text:'一饮而尽', result:'你感到肠胃在重组，也感到前所未有的平静。', death:0.2, deathText:'圣杯里的东西把你的内脏溶解了。', effect:{ body:7, will:6, corruption:7, progress:32 } },
+        { text:'分给病人', result:'三十个垂死的病人喝了圣杯，全都活了下来，也全都变了。', effect:{ renown:6, corruption:5, progress:28 } },
+        { text:'倒掉它', result:'液体渗入地面，长出了一片花园。', effect:{ will:6, corruption:-3, progress:16 } }
       ]}
   ],
   slaanesh: [
@@ -596,6 +741,42 @@ const PATH_EVENTS = {
         { text:'沉浸其中', result:'你感受到了前所未有的快感，也失去了部分记忆。', effect:{ corruption:7, renown:3, progress:28 } },
         { text:'挣扎反抗', result:'你咬破嘴唇，痛感让你清醒。', effect:{ will:6, corruption:-3, progress:14 } },
         { text:'请求更多', result:'触手收紧，你听见了黑暗王子的笑声。', effect:{ body:4, corruption:6, progress:24 } }
+      ]},
+    { id:'sl07', title:'灵魂之镜', text:'一面巨大的镜子立在你面前，镜中的你是另一个人。',
+      choices:[
+        { text:'与镜中的自己交谈', result:'镜中的你告诉你一些未来的事。', effect:{ mind:6, corruption:5, progress:26 } },
+        { text:'打碎镜子', result:'碎片划破你的手，血滴在地上变成了小小的精灵。', effect:{ body:4, renown:4, corruption:4, progress:22 } },
+        { text:'走进镜子', result:'你穿过了镜面，来到了另一个世界。', death:0.3, deathText:'你再也找不到回来的路。', effect:{ mind:7, corruption:6, progress:30 } }
+      ]},
+    { id:'sl08', title:'禁果', text:'一颗粉色的果实出现在你面前，散发着无法抗拒的香气。',
+      choices:[
+        { text:'吃下它', result:'你尝到了从未体验过的滋味。', effect:{ body:5, corruption:6, progress:26 } },
+        { text:'分给别人', result:'你把它切成九份，送给了九个陌生人。', effect:{ renown:5, corruption:4, progress:22 } },
+        { text:'销毁它', result:'你把它扔进火里，火焰变成了粉红色。', effect:{ will:6, corruption:-3, progress:14 } }
+      ]},
+    { id:'sl09', title:'欢愉之环', text:'一个由九个圆环组成的迷宫，每个环都散发着不同的气息。',
+      choices:[
+        { text:'穿越所有九环', result:'你走完了九环，失去了九段记忆。', death:0.3, deathText:'在第九环的尽头，你忘记了自己是谁。', effect:{ corruption:8, renown:6, progress:32 } },
+        { text:'只走前三环', result:'你保住了大部分自我。', effect:{ body:4, renown:4, corruption:4, progress:22 } },
+        { text:'绕开迷宫', result:'你选择了更直接的路。', effect:{ will:5, corruption:-3, progress:14 } }
+      ]},
+    { id:'sl10', title:'痛苦与欢愉', text:'一个垂死的帝国士兵请求你结束他的痛苦。你发现你享受这一刻。',
+      choices:[
+        { text:'慢慢结束他', result:'他的惨叫让你战栗。', effect:{ body:4, corruption:7, progress:28 } },
+        { text:'快速结束他', result:'你给了他一个痛快。', effect:{ will:5, corruption:3, progress:20 } },
+        { text:'救治他', result:'他活了下来，却再也不敢看你。', effect:{ will:5, corruption:-3, progress:14 } }
+      ]},
+    { id:'sl11', title:'完美的仆人', text:'一个自愿的灵魂跪在你面前，请求成为你的仆从。',
+      choices:[
+        { text:'接受', result:'他成为了你最忠诚的玩物。', effect:{ renown:5, corruption:6, progress:28 } },
+        { text:'拒绝', result:'他痛哭流涕，但你无动于衷。', effect:{ will:6, corruption:-3, progress:14 } },
+        { text:'送他去见黑暗王子', result:'他成为了色孽宫殿里的一件装饰品。', effect:{ corruption:7, renown:4, progress:26 } }
+      ]},
+    { id:'sl12', title:'被囚禁的艺术家', text:'一个被锁链锁住双手的艺术家跪在你面前，求你给他自由。',
+      choices:[
+        { text:'释放他', result:'他为你演奏了一首曲子，你听了七天七夜。', effect:{ mind:6, corruption:6, progress:28 } },
+        { text:'让他为你创作', result:'他为你画了一幅肖像，画中的你在流血。', effect:{ renown:5, corruption:7, progress:30 } },
+        { text:'杀了他', result:'他的血溅在你的袍子上，很美。', effect:{ body:5, corruption:5, progress:26 } }
       ]}
   ],
   tzeentch: [
@@ -634,6 +815,42 @@ const PATH_EVENTS = {
         { text:'尝试改变预言', result:'你改变了一些细节，但预言仍然成立。', death:0.3, deathText:'你越是挣扎，越是在预言之中。', effect:{ mind:7, corruption:5, progress:28 } },
         { text:'接受预言', result:'你平静地合上了书。', effect:{ will:6, mind:4, progress:22 } },
         { text:'把预言告诉别人', result:'七个人因你而死，八个人因你而生。', effect:{ renown:5, corruption:4, progress:24 } }
+      ]},
+    { id:'tz07', title:'水晶迷宫', text:'你走进一座由水晶构成的迷宫，每面墙都映出不同的你。',
+      choices:[
+        { text:'跟随其中一面墙', result:'你找到了迷宫的出口，但也失去了一个可能。', effect:{ mind:6, corruption:4, progress:24 } },
+        { text:'打破水晶墙', result:'碎片四散，你看到了所有可能的未来。', death:0.25, deathText:'你的意识无法承受如此多的未来。', effect:{ mind:8, corruption:6, progress:30 } },
+        { text:'站在原地冥想', result:'三天后，迷宫自动打开了。', effect:{ will:6, mind:5, progress:22 } }
+      ]},
+    { id:'tz08', title:'许愿井', text:'一口井在你面前，井底传来低语："许一个愿吧。"',
+      choices:[
+        { text:'许愿获得知识', result:'你脑中涌入了无数不属于你的记忆。', effect:{ mind:8, corruption:5, progress:28 } },
+        { text:'许愿获得权力', result:'一个行星的总督突然暴毙，你被推上了他的位置。', effect:{ renown:7, corruption:4, progress:26 } },
+        { text:'往井里扔石头', result:'井水溅起，低语消失了。', effect:{ will:5, corruption:-3, progress:14 } }
+      ]},
+    { id:'tz09', title:'命运织机', text:'一台巨大的织机在你面前，每一根线都是一个凡人的命运。',
+      choices:[
+        { text:'抽出一根线', result:'一个无辜者的命运断了。', effect:{ mind:6, corruption:6, progress:28 } },
+        { text:'织入自己的线', result:'你把自己的命运编了进去。', death:0.3, deathText:'你被卷进了织机，成为了它的一部分。', effect:{ mind:7, corruption:5, progress:28 } },
+        { text:'砸碎织机', result:'线断了一地，奸奇的笑声回荡。', effect:{ body:4, will:6, corruption:-3, progress:16 } }
+      ]},
+    { id:'tz10', title:'谎言的真实', text:'你发现你一直相信的某件事，其实是奸奇编织的谎言。',
+      choices:[
+        { text:'接受这个真相', result:'你的世界观崩塌，又在废墟上重建。', effect:{ mind:8, corruption:5, progress:30 } },
+        { text:'拒绝相信', result:'你继续活在谎言里，反而更快乐。', effect:{ will:5, corruption:3, progress:18 } },
+        { text:'向所有人揭露', result:'一千个人因为你发疯了。', effect:{ renown:6, corruption:5, progress:26 } }
+      ]},
+    { id:'tz11', title:'蓝色火焰', text:'一团蓝色的火焰在你掌心燃烧，它说："我可以实现你一个愿望，但你会付出代价。"',
+      choices:[
+        { text:'许愿', result:'你许下了愿望，代价是你忘记了许愿的内容。', effect:{ mind:7, corruption:6, progress:30 } },
+        { text:'吹灭火焰', result:'火焰熄灭了，但你的掌心留下了一个符号。', effect:{ will:6, corruption:-3, progress:16 } },
+        { text:'把火焰给别人', result:'你把火焰送给了另一个信徒。他消失了。', effect:{ renown:5, corruption:5, progress:24 } }
+      ]},
+    { id:'tz12', title:'未来的回响', text:'一道裂缝在你面前打开，从里面传出一个熟悉的声音——那是你自己的声音。',
+      choices:[
+        { text:'听未来的自己说话', result:'"别相信他。"你听见自己说，"他要的是你。"', effect:{ mind:8, will:5, corruption:6, progress:32 } },
+        { text:'走进裂缝', result:'你看到了一千年后的自己，已经不属于人类。', death:0.3, deathText:'两个你同时存在，宇宙无法容纳。', effect:{ mind:8, corruption:7, progress:32 } },
+        { text:'关闭裂缝', result:'裂缝关上时，你听见自己在尖叫。', effect:{ will:7, mind:4, progress:22 } }
       ]}
   ],
   chaos: [
@@ -672,6 +889,42 @@ const PATH_EVENTS = {
         { text:'献祭自己的一部分灵魂', result:'引擎启动了，你失去了一段记忆。', effect:{ body:5, mind:-3, corruption:6, progress:28 } },
         { text:'献祭一百名俘虏', result:'引擎轰鸣着站了起来。', effect:{ corruption:5, renown:4, progress:24 } },
         { text:'拒绝献祭', result:'工程师看了你一眼，转身离去。', effect:{ will:5, corruption:-3, progress:12 } }
+      ]},
+    { id:'ch07', title:'亚空间风暴', text:'你的战舰被亚空间风暴卷了进去。',
+      choices:[
+        { text:'祈祷', result:'你活下来了，但船舱里多了几个不该存在的东西。', effect:{ corruption:6, will:4, progress:26 } },
+        { text:'冲上甲板', result:'你看见了亚空间的全貌，也失去了部分理智。', death:0.25, deathText:'你凝视深渊，深渊也凝视着你。', effect:{ mind:6, corruption:7, progress:30 } },
+        { text:'躲进舱室', result:'你抱着头等待风暴过去。', effect:{ body:4, will:3, progress:18 } }
+      ]},
+    { id:'ch08', title:'恶魔世界', text:'你的部队降落在了一个恶魔世界上。',
+      choices:[
+        { text:'探索', result:'你发现了一座古老的祭坛。', effect:{ mind:5, corruption:5, progress:26 } },
+        { text:'战斗', result:'一个恶魔向你冲来。', battle:{ name:'血letter', power:110 }, effect:{ body:5, renown:4, progress:24 } },
+        { text:'立刻撤离', result:'你活着回来了，但有人记得你逃跑的样子。', effect:{ renown:-3, will:3, progress:12 } }
+      ]},
+    { id:'ch09', title:'诸神的使者', text:'四名使者分别代表恐虐、纳垢、色孽、奸奇，他们同时找到了你。',
+      choices:[
+        { text:'选择一名', result:'你选择了一位，其余三位沉默地离开。', effect:{ body:4, corruption:6, progress:28 } },
+        { text:'拒绝所有', result:'四位神祇同时笑了。', effect:{ will:7, corruption:-3, progress:16 } },
+        { text:'献上一切', result:'你把自己献给了四位神祇。', death:0.35, deathText:'四个意志争抢一具身体，结果什么都没有剩下。', effect:{ corruption:8, renown:5, progress:32 } }
+      ]},
+    { id:'ch10', title:'亚空间晋升', text:'你站在一道巨大的亚空间裂缝前，里面传来无数声音。',
+      choices:[
+        { text:'跳进去', result:'你在裂缝里待了一千年，出来时只过了一秒。', death:0.3, deathText:'你被亚空间吞噬，从未存在过。', effect:{ mind:7, corruption:6, progress:30 } },
+        { text:'用裂缝献祭', result:'你把一百名俘虏推进去，裂缝闭上了。', effect:{ corruption:6, renown:4, progress:26 } },
+        { text:'封住裂缝', result:'你用圣油和链锯把裂缝封住了。', effect:{ will:6, corruption:-3, progress:16 } }
+      ]},
+    { id:'ch11', title:'忠诚的疑问', text:'你曾经是帝皇的信徒。现在你站在混沌的阵营里。',
+      choices:[
+        { text:'彻底堕落', result:'你杀了最后一个还叫你"兄弟"的人。', effect:{ body:5, corruption:7, progress:28 } },
+        { text:'保留最后一点信仰', result:'你在盔甲里藏了一个帝皇的徽章。', effect:{ loyalty:5, will:4, corruption:-2, progress:18 } },
+        { text:'嘲笑过去的自己', result:'你把徽章扔进了亚空间裂缝。', effect:{ corruption:5, renown:3, progress:22 } }
+      ]},
+    { id:'ch12', title:'亚空间之门', text:'一扇由青铜和血肉构成的大门在你面前，门上刻着四位神祇的印记。',
+      choices:[
+        { text:'推开大门', result:'门后是亚空间的海洋。', death:0.35, deathText:'你被亚空间同化，成为了它的一部分。', effect:{ mind:8, corruption:8, progress:34 } },
+        { text:'在门上刻下自己的名字', result:'门上的印记同时亮了起来。', effect:{ renown:7, corruption:6, progress:30 } },
+        { text:'封住大门', result:'你用圣油和链锯把门封住了，代价是失去了一只手。', effect:{ body:-4, will:7, corruption:-3, progress:18 } }
       ]}
   ],
   rebel: [
@@ -710,6 +963,42 @@ const PATH_EVENTS = {
         { text:'接受这个称号', result:'你在总督府大厅里加冕。', effect:{ renown:7, corruption:4, progress:30 } },
         { text:'拒绝，我是解放者', result:'你把权力交给了人民议会。', effect:{ will:6, renown:3, progress:22 } },
         { text:'清洗反对者', result:'十七个家族在一夜之间消失了。', effect:{ renown:5, corruption:5, progress:26 } }
+      ]},
+    { id:'rb07', title:'粮食暴动', text:'一个农业世界拒绝向上层缴纳粮食，他们找到了你。',
+      choices:[
+        { text:'支援他们', result:'你派出了一支小队，帮助农民抵抗税收官。', effect:{ renown:6, will:4, progress:26 } },
+        { text:'夺取他们的粮食', result:'你把整个行星变成了你的补给站。', effect:{ body:4, renown:4, corruption:4, progress:24 } },
+        { text:'保持中立', result:'你什么都没做，他们自己解决了。', effect:{ mind:4, will:3, progress:16 } }
+      ]},
+    { id:'rb08', title:'叛徒审判官', text:'一名审判官私下联系你，说他也对帝国失望了。',
+      choices:[
+        { text:'接受他的帮助', result:'他给了你一批禁书和帝国机密。', effect:{ mind:7, renown:4, corruption:4, progress:28 } },
+        { text:'拒绝他', result:'你怀疑这是陷阱。', effect:{ will:5, mind:4, progress:18 } },
+        { text:'杀了他', result:'他的尸体被挂在城门口。', effect:{ body:5, renown:5, corruption:4, progress:26 } }
+      ]},
+    { id:'rb09', title:'星界军叛逃者', text:'一整个星界军连队向你投降，他们不想再为帝皇打仗了。',
+      choices:[
+        { text:'接收他们', result:'你得到了一百五十名训练有素的士兵。', effect:{ renown:6, mind:4, progress:28 } },
+        { text:'拒绝', result:'他们被送去了劳改营。', effect:{ body:4, will:3, progress:18 } },
+        { text:'处决军官', result:'你把军官全部处决，士兵留下来。', effect:{ renown:5, corruption:5, progress:24 } }
+      ]},
+    { id:'rb10', title:'帝国反击战', text:'帝国发动了大规模反击，你的部队被包围了。',
+      choices:[
+        { text:'死守阵地', result:'你守住了阵地，但付出了巨大代价。', battle:{ name:'帝国卫队军团', power:130 }, death:0.3, deathText:'你死在了战壕里，手里还握着枪。', effect:{ body:6, renown:5, progress:30 } },
+        { text:'突围', result:'你带着三百人突出了包围圈。', effect:{ body:4, mind:5, progress:24 } },
+        { text:'投降', result:'你被押上了审判台。', death:0.6, deathText:'你被当作异端处决。', effect:{ will:4, renown:-3, progress:14 } }
+      ]},
+    { id:'rb11', title:'新的旗帜', text:'你的部队需要一面新的旗帜。',
+      choices:[
+        { text:'用帝皇的旗帜，只是划掉他的脸', result:'一面被亵渎的帝国旗帜升了起来。', effect:{ renown:6, corruption:5, progress:28 } },
+        { text:'用平民的旗帜', result:'旗帜上画的是一只手，握着一把锤子。', effect:{ renown:5, will:5, progress:26 } },
+        { text:'用无字的旗帜', result:'一面纯黑的旗帜升了起来。', effect:{ renown:4, mind:5, corruption:3, progress:22 } }
+      ]},
+    { id:'rb12', title:'帝皇的赦免', text:'一名使者举着白旗来到你的营地："帝皇愿意赦免所有归顺者。"',
+      choices:[
+        { text:'接受赦免', result:'你跪在使者面前，成为了一名帝国将军。', effect:{ loyalty:7, renown:4, corruption:-3, progress:24 } },
+        { text:'拒绝', result:'你当着使者的面烧掉了赦免书。', effect:{ will:6, renown:5, progress:28 } },
+        { text:'杀了使者', result:'你把使者的头送回了帝国。', effect:{ body:5, renown:4, corruption:5, progress:30 } }
       ]}
   ],
   ig: [
@@ -748,6 +1037,42 @@ const PATH_EVENTS = {
         { text:'请求加入他们', result:'一名星际战士看了你一眼，点了点头。', battle:{ name:'混沌冠军', power:130 }, death:0.3, deathText:'你在冠军的链锯剑下化为碎片。', effect:{ body:7, renown:5, progress:30 } },
         { text:'掩护他们', result:'你为星际战士提供了火力掩护。', effect:{ body:4, will:4, progress:24 } },
         { text:'远远看着', result:'你看着他们战斗，心中升起一种向往。', effect:{ mind:5, loyalty:4, progress:22 } }
+      ]},
+    { id:'ig07', title:'化学武器', text:'敌人释放了化学武器，整个连队都倒下了。',
+      choices:[
+        { text:'戴上防毒面具，继续冲锋', result:'你在毒气中冲了三百米。', death:0.25, deathText:'防毒面具的滤芯在你冲锋到一半时失效了。', effect:{ body:6, will:5, progress:28 } },
+        { text:'撤退', result:'你带着三个还能走的战友撤了下来。', effect:{ will:5, mind:3, progress:18 } },
+        { text:'救助倒下的战友', result:'你救回了七个人，但自己也吸入了不少毒气。', effect:{ body:-3, will:6, renown:4, progress:22 } }
+      ]},
+    { id:'ig08', title:'卡塔昌的丛林斗士', text:'一名卡塔昌丛林斗士被临时编入你们连队。',
+      choices:[
+        { text:'向他学习', result:'他教了你在丛林里活下去的方法。', effect:{ body:5, mind:4, progress:24 } },
+        { text:'与他决斗', result:'他赢了，但你赢得了他的尊重。', battle:{ name:'卡塔昌丛林斗士', power:105 }, effect:{ body:5, renown:4, progress:26 } },
+        { text:'疏远他', result:'他太野了，你不想和他走得太近。', effect:{ will:3, mind:3, progress:14 } }
+      ]},
+    { id:'ig09', title:'克里格死亡兵团', text:'一队克里格死亡兵团被派来支援你们的阵地。',
+      choices:[
+        { text:'与他们并肩作战', result:'他们的冷酷让你印象深刻。', effect:{ body:5, will:5, progress:26 } },
+        { text:'研究他们的战术', result:'你学到了"死士冲锋"的精髓。', effect:{ mind:6, progress:24 } },
+        { text:'劝阻他们的自杀式冲锋', result:'他们不听，但你至少试过。', effect:{ will:5, renown:3, progress:20 } }
+      ]},
+    { id:'ig10', title:'泰伦虫族来袭', text:'天空中出现了孢子囊，泰伦虫族登陆了。',
+      choices:[
+        { text:'死守', result:'你打光了所有弹药，阵地还在。', battle:{ name:'泰伦虫族大军', power:135 }, death:0.35, deathText:'你被虫群吞没，尸骨无存。', effect:{ body:7, renown:6, progress:32 } },
+        { text:'掩护平民撤离', result:'你救下了两千个平民。', effect:{ will:6, renown:5, progress:28 } },
+        { text:'呼叫轨道轰炸', result:'轰炸把虫族和阵地一起抹平了。', effect:{ mind:6, renown:4, progress:24 } }
+      ]},
+    { id:'ig11', title:'团旗', text:'团旗手倒下了，旗帜插在敌阵中央。',
+      choices:[
+        { text:'冲上去夺回旗帜', result:'你冒着枪林弹雨把旗夺了回来。', battle:{ name:'敌军狙击手', power:100 }, death:0.3, deathText:'你在离旗帜三步远的地方倒下。', effect:{ body:6, renown:6, progress:30 } },
+        { text:'指挥炮兵掩护', result:'你用炮火覆盖了那片区域。', effect:{ mind:5, renown:4, progress:24 } },
+        { text:'放弃旗帜', result:'旗帜倒了，但你保住了连队。', effect:{ will:4, renown:-3, progress:14 } }
+      ]},
+    { id:'ig12', title:'轨道空降', text:'你被选中参加一次对混沌世界的轨道空降。',
+      choices:[
+        { text:'第一个跳下去', result:'你第一个落地，第一个开火。', battle:{ name:'混沌战帮', power:125 }, death:0.3, deathText:'你在落地时被防空火力撕碎。', effect:{ body:7, renown:6, progress:32 } },
+        { text:'指挥空降', result:'你从指挥舱指挥整个空降行动。', effect:{ mind:7, renown:5, progress:28 } },
+        { text:'请求调职', result:'你被调到了后勤部。', effect:{ renown:-3, will:4, progress:14 } }
       ]}
   ],
   tech: [
@@ -786,10 +1111,45 @@ const PATH_EVENTS = {
         { text:'启动它', result:'装置亮起，周围的空间扭曲了一瞬。', death:0.35, deathText:'装置的力场将你抹除，甚至连灰烬都没留下。', effect:{ mind:9, corruption:5, progress:30 } },
         { text:'带回火星研究', result:'你把它小心翼翼地装进了密封容器。', effect:{ mind:6, renown:4, progress:26 } },
         { text:'就地销毁', result:'你启动了自毁程序，装置化为一堆废铁。', effect:{ will:5, loyalty:5, progress:20 } }
+      ]},
+    { id:'tc07', title:'泰坦修会', text:'一台帝皇级泰坦被送到了你的铸造神殿进行修复。',
+      choices:[
+        { text:'亲自修复泰坦', result:'你在泰坦的驾驶舱里待了三个月。', effect:{ mind:8, renown:6, progress:32 } },
+        { text:'与泰坦机魂对话', result:'泰坦的机魂有几十万年的记忆。', effect:{ mind:7, will:5, progress:28 } },
+        { text:'研究泰坦结构', result:'你画下了泰坦的核心图纸。', effect:{ mind:6, progress:24 } }
+      ]},
+    { id:'tc08', title:'机械方舟', text:'一艘巨大的机械方舟停靠在你们的铸造世界。',
+      choices:[
+        { text:'登上方舟', result:'你在方舟内部看到了几万年的科技积累。', effect:{ mind:9, renown:5, progress:32 } },
+        { text:'请求调职', result:'你被允许成为方舟的乘员。', effect:{ mind:5, renown:6, progress:28 } },
+        { text:'留在原地', result:'方舟离开了，你继续你的工作。', effect:{ will:5, mind:4, progress:20 } }
+      ]},
+    { id:'tc09', title:'与死灵科技融合', text:'你在一颗墓穴世界上发现了一块还在运转的死灵金属。',
+      choices:[
+        { text:'研究它', result:'死灵金属的分子结构比火星的所有知识都先进。', effect:{ mind:8, corruption:5, progress:30 } },
+        { text:'融入自己', result:'你把死灵金属植入体内。', death:0.35, deathText:'死灵金属吞噬了你的全部血肉，你变成了一具机械。', effect:{ body:7, mind:5, corruption:6, progress:30 } },
+        { text:'销毁它', result:'你启动了自毁程序。', effect:{ will:6, loyalty:5, progress:18 } }
+      ]},
+    { id:'tc10', title:'禁忌的思考', text:'你开始怀疑：万机神是否真的存在？',
+      choices:[
+        { text:'继续信仰', result:'你把疑问删除了。', effect:{ loyalty:6, mind:4, progress:24 } },
+        { text:'深入研究', result:'你找到了一些古老的档案，里面提到了"黑暗时代"。', effect:{ mind:8, corruption:5, progress:30 } },
+        { text:'向别人提问', result:'三个技术神甫被你的问题吓跑了。', effect:{ mind:5, renown:3, corruption:3, progress:22 } }
+      ]},
+    { id:'tc11', title:'机械飞升', text:'一位大贤者愿意为你进行机械飞升，将你的意识上传至一台战将泰坦。',
+      choices:[
+        { text:'接受飞升', result:'你的肉体被溶解，意识融入了泰坦。', death:0.4, deathText:'你的意识无法承受泰坦的数据量，崩解了。', effect:{ mind:10, renown:7, corruption:5, progress:34 } },
+        { text:'拒绝', result:'你保留了自己的血肉。', effect:{ will:6, mind:4, progress:20 } },
+        { text:'部分飞升', result:'你把一部分意识上传到了伺服机里。', effect:{ mind:6, body:4, progress:28 } }
+      ]},
+    { id:'tc12', title:'数据危机', text:'一段自我复制的恶意代码侵入了你的神经系统。',
+      choices:[
+        { text:'与它对抗', result:'你在自己脑中与它搏斗了三天。', death:0.3, deathText:'代码赢了，你变成了一具空壳。', effect:{ mind:9, corruption:5, progress:32 } },
+        { text:'研究它', result:'你发现这段代码来自黑暗时代。', effect:{ mind:8, corruption:5, progress:30 } },
+        { text:'切断连接', result:'你切断了自己的部分神经，失去了左手的感觉。', effect:{ body:-4, will:6, mind:4, progress:22 } }
       ]}
   ]
 };
-
 /* ============================
    神选试炼
 ============================ */
